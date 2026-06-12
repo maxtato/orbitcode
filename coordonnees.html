@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#091310">
+<title>Transmission de Coordonnées</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#c66a2a; --red:#b04a32;
+  --amber:#caa23c; --amber-bright:#ecbf5a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:'Oswald','Arial Narrow',sans-serif;color:#e8e2d2;
+  background:radial-gradient(130% 110% at 50% 0%,#222731 0%,#0d0f12 58%,#050608 100%);
+  min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+.mono{font-family:'Share Tech Mono',monospace}
+.stage{width:100%;max-width:740px;display:flex;flex-direction:column;gap:8px}
+
+/* ---------- BOARD (parchemin) ---------- */
+.board{position:relative;width:100%;aspect-ratio:1833/1366;
+  background:url('assets/game_board.png') center/100% 100% no-repeat;
+  filter:drop-shadow(0 16px 24px rgba(0,0,0,.55))}
+.board-inner{position:absolute;left:9.2%;top:9%;right:9.2%;bottom:8%;
+  display:flex;flex-direction:column;gap:1%}
+.b-head{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1.5px solid rgba(58,42,22,.38);padding-bottom:.5%}
+.b-title{font-size:clamp(11px,2.1vw,16px);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4a3418}
+.b-meta{font-family:'Share Tech Mono',monospace;font-size:clamp(10px,1.7vw,13px);color:#6a5230}
+.b-meta b{color:#3a2a14;font-weight:700}
+.b-lbl{font-size:clamp(8px,1.35vw,11px);letter-spacing:.14em;text-transform:uppercase;color:#7a6038;font-weight:600}
+.b-main{display:flex;justify-content:space-between;align-items:flex-end;gap:3%}
+.b-target{flex:1;min-width:0}
+.target-num{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:clamp(40px,9.4vw,74px);line-height:.92;color:#2f5f37;letter-spacing:.01em}
+.target-num.done{color:#9a6a1e}
+.tstatus{font-size:clamp(8px,1.25vw,11px);text-transform:uppercase;letter-spacing:.07em;color:#7a6038;margin-top:2px}
+.b-timer{text-align:right;min-width:30%}
+.timer{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:clamp(26px,6.2vw,46px);line-height:1;color:#7a3a1e}
+.timer.warn{color:#a85a1e}.timer.crit{color:#a4291c;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.4}}
+.timer-bar{height:6px;background:rgba(58,42,22,.22);border:1px solid rgba(58,42,22,.4);border-radius:4px;overflow:hidden;margin-top:4px}
+.timer-bar>i{display:block;height:100%;background:linear-gradient(90deg,#b07a2a,#caa23c);transition:width 1s linear}
+.b-numbers{margin-top:auto}
+.tiles{display:flex;gap:1.5%;flex-wrap:wrap;margin-top:.6%}
+.tile{flex:1 0 9%;min-width:9%;max-width:13%;aspect-ratio:1/.9;
+  border:2px solid #6e5026;border-radius:6px;
+  background:linear-gradient(180deg,#cdb280,#b9986a);
+  color:#3a2a12;font-weight:700;font-family:'Share Tech Mono',monospace;
+  font-size:clamp(15px,3.1vw,26px);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 0 #6e5026,inset 0 1px 0 rgba(255,255,255,.3);transition:.1s}
+.tile:hover{transform:translateY(-2px);border-color:#3a2a12}
+.tile.derived{border-color:#9a7322;background:linear-gradient(180deg,#dabf86,#c5a566);color:#6a4a12}
+.tile.ext{border-color:#9a3a2a;background:linear-gradient(180deg,#cca382,#b07a5a);color:#7a2a1a}
+.tile.sel-a{border-color:var(--orange);box-shadow:0 0 0 3px rgba(198,106,42,.45),0 2px 0 #6e5026}
+.tile.sel-b{border-color:#3a78a8;box-shadow:0 0 0 3px rgba(58,120,168,.45),0 2px 0 #6e5026}
+.tile.hintglow{animation:hint 1.1s ease-in-out 3}
+.tile.deny{animation:shake .3s}
+@keyframes hint{0%,100%{box-shadow:0 2px 0 #6e5026}50%{box-shadow:0 0 0 4px rgba(202,162,60,.6),0 2px 0 #6e5026}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.b-ext{margin-top:1%}
+.b-ext .b-lbl{display:flex;justify-content:space-between;align-items:baseline}
+.b-ext .cost{color:#9a3a2a;font-size:clamp(7px,1.1vw,9px);letter-spacing:.03em}
+.exts{display:flex;gap:1.3%;flex-wrap:wrap;margin-top:.5%}
+.ext{flex:0 0 auto;width:7%;min-width:28px;aspect-ratio:1/.88;border:1px solid #9a3a2a;border-radius:5px;
+  background:rgba(154,58,42,.12);color:#8a2e1e;font-family:'Share Tech Mono',monospace;
+  font-size:clamp(11px,2.3vw,17px);display:flex;align-items:center;justify-content:center;transition:.1s}
+.ext:hover:not(:disabled){background:rgba(154,58,42,.25);transform:translateY(-2px)}
+.ext:disabled{opacity:.35;cursor:not-allowed}
+
+/* ---------- MACHINE ---------- */
+.machine{position:relative;width:100%;aspect-ratio:3530/2058;
+  background:url('assets/game_machine.png') center/100% 100% no-repeat;
+  filter:drop-shadow(0 18px 28px rgba(0,0,0,.5))}
+.machine>div{position:absolute}
+.m-screen-left{left:6.8%;top:13.5%;width:33.8%;height:50%;padding:3% 3.5%;overflow:hidden;display:flex;flex-direction:column}
+.m-screen-lbl{font-size:clamp(7px,1.05vw,10px);letter-spacing:.12em;text-transform:uppercase;color:#3a6e4a;margin-bottom:3%}
+.log{flex:1;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.log-empty{font-size:clamp(8px,1.25vw,12px);color:#2c5238;letter-spacing:.05em;text-transform:uppercase}
+.log-row{display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;
+  font-size:clamp(9px,1.5vw,15px);color:#74d68a;padding:1px 0}
+.log-row .i{color:#2f6b45;width:12px}
+.log-row .op{color:#ecbf5a;font-weight:700}
+.log-row .r{margin-left:auto;color:#aaffbf;font-weight:700}
+.log-row.win .r{text-shadow:0 0 8px rgba(120,255,150,.6)}
+.m-lcd{left:45.3%;top:10.6%;width:29.1%;height:12.6%;display:flex;align-items:center;justify-content:flex-end;padding:0 4%;overflow:hidden}
+.lcd-text{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:clamp(18px,4.6vw,40px);
+  color:#74d68a;text-shadow:0 0 9px rgba(120,240,150,.6);letter-spacing:.04em}
+.lcd-text.win{color:#aaffbf}.lcd-text.err{color:#ff9483;text-shadow:0 0 10px rgba(255,90,60,.7)}
+.m-side{left:78.5%;top:18%;width:14%;height:23%;display:flex;flex-direction:column;justify-content:center;gap:12%}
+.m-gauge .g-l{display:flex;justify-content:space-between;font-size:clamp(6px,.95vw,9px);color:#9aa39a;letter-spacing:.03em;margin-bottom:3px}
+.m-gauge .g-l b{font-family:'Share Tech Mono',monospace}
+.bar{height:5px;background:#0a1410;border:1px solid #1d2c24;border-radius:4px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:4px;transition:width .3s}
+.fill-amber{background:linear-gradient(90deg,#a87d2c,#ecbf5a)}
+.fill-green{background:linear-gradient(90deg,#3f8a4a,#86e89a)}
+/* keypad hotspots */
+.pad{position:absolute;inset:0}
+.k{position:absolute;background:transparent;border:0;border-radius:12px;cursor:pointer;transition:background .08s,box-shadow .08s}
+.k:hover{background:rgba(255,255,255,.07)}
+.k.press,.k:active{background:rgba(255,255,255,.16)}
+.k.clr.press,.k.clr:active{background:rgba(255,120,90,.22)}
+.k.ent{border-radius:16px}
+.k.ent:hover{background:rgba(140,255,170,.12)}
+.k.ent.press,.k.ent:active{background:rgba(140,255,170,.28);box-shadow:0 0 18px rgba(120,255,150,.5)}
+.k.opk.active{background:rgba(236,191,90,.18);box-shadow:0 0 0 3px rgba(236,191,90,.7),0 0 16px rgba(236,191,90,.45)}
+.foot{text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px;color:#8a8276;letter-spacing:.06em;min-height:16px}
+.foot .st{color:#ecbf5a}
+
+/* overlay + modal + toast */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(4,9,7,.85);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.overlay[hidden]{display:none}
+.modal{position:relative;max-width:400px;width:100%;background:linear-gradient(180deg,#15201c,#0c1512);border:1px solid var(--amber);border-radius:10px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.7);text-align:center}
+.m-title{font-size:28px;font-weight:700;letter-spacing:.04em;margin-bottom:4px}
+.m-title.ok{color:#86e89a}.m-title.bad{color:#ef8a44}
+.m-sub{color:#7e958c;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px}
+.recap{border-top:1px solid #244236;border-bottom:1px solid #244236;padding:10px 0;margin-bottom:14px;font-family:'Share Tech Mono',monospace;font-size:13px}
+.recap .row{display:flex;justify-content:space-between;padding:3px 4px;color:#cdbf9a}
+.recap .row b{color:#e4eee7}.recap .row .g{color:#86e89a}.recap .row .o{color:#ef8a44}
+.recap .reward{display:flex;justify-content:space-between;font-size:17px;margin-top:6px;padding-top:7px;border-top:1px dashed #244236;color:#efe8cf}
+.recap .reward b{color:#ecbf5a;font-weight:700}
+.mbtn{display:block;width:100%;padding:13px;border-radius:7px;background:linear-gradient(180deg,#3f8a4f,#2c6439);color:#eafff0;font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 3px 0 #1d4226}
+.mbtn:active{transform:translateY(3px);box-shadow:0 0 0 #1d4226}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;background:#0d231c;border:1px solid var(--amber);border-radius:7px;padding:10px 16px;font-size:13px;color:#cdbf9a;box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:84vw;text-align:center}
+.toast[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important}}
+</style>
+</head>
+<body>
+<div class="stage">
+  <section class="board" id="board">
+    <div class="board-inner">
+      <div class="b-head">
+        <span class="b-title">Transmission de coordonnées</span>
+        <span class="b-meta">Crédits <b id="score">0</b> · Transmission <b id="round">1</b></span>
+      </div>
+      <div class="b-main">
+        <div class="b-target">
+          <div class="b-lbl">Coordonnée à transmettre</div>
+          <div class="target-num" id="target">000</div>
+          <div class="tstatus" id="tstatus">À décoder avec les nombres disponibles</div>
+        </div>
+        <div class="b-timer">
+          <div class="b-lbl">Temps imparti</div>
+          <div class="timer" id="timer">01:30</div>
+          <div class="timer-bar"><i id="timerBar" style="width:100%"></i></div>
+        </div>
+      </div>
+      <div class="b-numbers">
+        <div class="b-lbl">Nombres disponibles</div>
+        <div class="tiles" id="tiles"></div>
+      </div>
+      <div class="b-ext">
+        <div class="b-lbl"><span>Nombres de secours</span><span class="cost">−12 puissance · −10 précision</span></div>
+        <div class="exts" id="exts"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="machine" id="machine">
+    <div class="m-screen-left">
+      <div class="m-screen-lbl">Journal de calcul</div>
+      <div class="log" id="log"></div>
+    </div>
+    <div class="m-lcd"><span class="lcd-text" id="lcd">0</span></div>
+    <div class="m-side">
+      <div class="m-gauge"><div class="g-l"><span>PWR</span><b id="powerPct">100%</b></div><div class="bar"><i class="fill-amber" id="powerBar" style="width:100%"></i></div></div>
+      <div class="m-gauge"><div class="g-l"><span>PRC</span><b id="precPct">100%</b></div><div class="bar"><i class="fill-green" id="precBar" style="width:100%"></i></div></div>
+    </div>
+    <div class="pad" id="pad"></div>
+  </section>
+
+  <div class="foot"><span class="st" id="statusMsg"></span></div>
+</div>
+
+<div class="overlay" id="resultOverlay" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+/* ===== MOTEUR (logique validée en Node, embarquée verbatim) ===== */
+/* =========================================================================
+   CALCCRAFTER — Moteur de jeu (logique pure, testable en Node)
+   "Le compte est bon" skinné en terminal de décryptage.
+   ========================================================================= */
+
+function randInt(n) { return Math.floor(Math.random() * n); }
+function pick(arr) { return arr[randInt(arr.length)]; }
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ---- Configs de difficulté en fonction du niveau (rang) ---------------- */
+function difficultyForLevel(level) {
+  // level : entier >= 1
+  if (level <= 2)  return { tMin: 40,  tMax: 220,  bigCount: 1, allowDivide: true,  oddBias: false };
+  if (level <= 5)  return { tMin: 120, tMax: 480,  bigCount: 2, allowDivide: true,  oddBias: false };
+  if (level <= 9)  return { tMin: 250, tMax: 720,  bigCount: 2, allowDivide: true,  oddBias: false };
+  if (level <= 14) return { tMin: 400, tMax: 900,  bigCount: 2, allowDivide: true,  oddBias: false };
+  return            { tMin: 500, tMax: 999,  bigCount: 2, allowDivide: true,  oddBias: false };
+}
+
+/* ---- Tirage des 6 nombres de départ ----------------------------------- */
+function drawNumbers(cfg, modifier) {
+  const smalls = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const oddSmalls = [1, 3, 5, 7, 9];
+  const bigs = [25, 50, 75, 100];
+  const total = 6;
+  let bigCount = cfg.bigCount;
+  if (modifier === 'tiny') bigCount = 0;        // Petits nombres : que des petits
+  const smallCount = total - bigCount;
+
+  const out = [];
+  const oddOnly = cfg.oddBias || modifier === 'odd';
+
+  // petits
+  const sourceSmalls = oddOnly ? oddSmalls : smalls;
+  for (let i = 0; i < smallCount; i++) out.push(pick(sourceSmalls));
+  // grands
+  for (let i = 0; i < bigCount; i++) out.push(pick(bigs));
+
+  return shuffle(out);
+}
+
+/* ---- Solveur : renvoie le chemin (liste d'étapes) vers la cible -------- */
+/* values: tableau de nombres. target: entier. allowDivide: bool.
+   Renvoie [{a, op, b, r}, ...] ou null. */
+function solvePath(values, target, allowDivide) {
+  if (allowDivide === undefined) allowDivide = true;
+  const seen = new Set();
+  function key(arr) { return arr.slice().sort((x, y) => x - y).join(','); }
+
+  function rec(arr) {
+    for (let i = 0; i < arr.length; i++) if (arr[i] === target) return [];
+    if (arr.length < 2) return null;
+    const k = key(arr);
+    if (seen.has(k)) return null;
+    seen.add(k);
+
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = 0; j < arr.length; j++) {
+        if (i === j) continue;
+        const a = arr[i], b = arr[j];
+        const cands = [];
+        // + et × : éviter les doublons en imposant i<j
+        if (i < j) {
+          cands.push(['+', a + b]);
+          cands.push(['×', a * b]);
+        }
+        // − : ordonné, résultat strictement positif
+        if (a - b > 0) cands.push(['−', a - b]);
+        // ÷ : ordonné, division entière
+        if (allowDivide && b !== 0 && a % b === 0) cands.push(['÷', a / b]);
+
+        for (const [op, r] of cands) {
+          const rest = [];
+          for (let t = 0; t < arr.length; t++) if (t !== i && t !== j) rest.push(arr[t]);
+          if (r === target) return [{ a, op, b, r }];
+          rest.push(r);
+          const sub = rec(rest);
+          if (sub) return [{ a, op, b, r }, ...sub];
+        }
+      }
+    }
+    return null;
+  }
+  return rec(values.slice());
+}
+
+function isReachable(values, target, allowDivide) {
+  return solvePath(values, target, allowDivide) !== null;
+}
+
+/* ---- Construction directe d'une cible solvable (>= 2 étapes) ----------- */
+function buildSolvable(numbers, cfg) {
+  const allowDivide = cfg.allowDivide;
+  let pool = numbers.map(v => ({ v }));
+  const steps = [];
+  const maxSteps = numbers.length - 1;
+
+  for (let s = 0; s < maxSteps; s++) {
+    if (pool.length < 2) break;
+    const moves = [];
+    for (let i = 0; i < pool.length; i++) {
+      for (let j = 0; j < pool.length; j++) {
+        if (i === j) continue;
+        const a = pool[i].v, b = pool[j].v;
+        if (i < j) {
+          moves.push({ i, j, op: '+', r: a + b });
+          moves.push({ i, j, op: '×', r: a * b });
+        }
+        if (a - b > 0) moves.push({ i, j, op: '−', r: a - b });
+        if (allowDivide && b !== 0 && a % b === 0 && a / b > 1) moves.push({ i, j, op: '÷', r: a / b });
+      }
+    }
+    if (!moves.length) break;
+
+    // on privilégie les coups qui restent < tMax pour ne pas exploser
+    const sane = moves.filter(m => m.r <= cfg.tMax * 1.6 && m.r >= 1);
+    const mv = pick(sane.length ? sane : moves);
+
+    steps.push({ a: pool[mv.i].v, op: mv.op, b: pool[mv.j].v, r: mv.r });
+    pool = pool.filter((_, k) => k !== mv.i && k !== mv.j);
+    pool.push({ v: mv.r });
+
+    // cible atteinte ?
+    if (steps.length >= 2 && mv.r >= cfg.tMin && mv.r <= cfg.tMax) {
+      return { target: mv.r, steps };
+    }
+  }
+  return null;
+}
+
+/* ---- Génère une manche complète --------------------------------------- */
+function generateRound(level, modifier) {
+  const cfg = Object.assign({}, difficultyForLevel(level));
+  if (modifier === 'nodiv') cfg.allowDivide = false;
+  if (modifier === 'tiny')  cfg.bigCount = 0;
+  if (modifier === 'odd')   cfg.oddBias = true;
+  if (modifier === 'big')   { cfg.tMin = Math.max(cfg.tMin, 701); cfg.tMax = 999; cfg.bigCount = 2; }
+  for (let attempt = 0; attempt < 6000; attempt++) {
+    const numbers = drawNumbers(cfg, modifier);
+    const built = buildSolvable(numbers, cfg);
+    if (!built) continue;
+    // la cible ne doit pas être un nombre de départ
+    if (numbers.includes(built.target)) continue;
+    // sécurité : on revérifie que c'est résoluble avec le solveur générique
+    if (!isReachable(numbers, built.target, cfg.allowDivide)) continue;
+    return {
+      target: built.target,
+      numbers,
+      reference: built.steps,        // une solution (pour l'indice)
+      allowDivide: cfg.allowDivide
+    };
+  }
+  // Filet de sécurité (déterministe) : 50 × 10 − 8 − 5 = 487
+  return {
+    target: 487,
+    numbers: [2, 5, 8, 10, 25, 50],
+    reference: [
+      { a: 50, op: '×', b: 10, r: 500 },
+      { a: 500, op: '−', b: 8, r: 492 },
+      { a: 492, op: '−', b: 5, r: 487 }
+    ],
+    allowDivide: true
+  };
+}
+
+/* ---- Nombre minimal d'opérations pour atteindre la cible (BFS) -------- */
+function minOps(values, target, allowDivide) {
+  if (allowDivide === undefined) allowDivide = true;
+  if (values.includes(target)) return 0;
+  const key = a => a.slice().sort((x, y) => x - y).join(',');
+  const visited = new Set([key(values)]);
+  let frontier = [values.slice()];
+  let depth = 0;
+  const MAX = 250000;
+  while (frontier.length) {
+    depth++;
+    const next = [];
+    for (const arr of frontier) {
+      for (let i = 0; i < arr.length; i++) {
+        for (let j = 0; j < arr.length; j++) {
+          if (i === j) continue;
+          const a = arr[i], b = arr[j];
+          const results = [];
+          if (i < j) { results.push(a + b); results.push(a * b); }
+          if (a - b > 0) results.push(a - b);
+          if (allowDivide && b !== 0 && a % b === 0) results.push(a / b);
+          for (const r of results) {
+            if (r === target) return depth;
+            const rest = [];
+            for (let t = 0; t < arr.length; t++) if (t !== i && t !== j) rest.push(arr[t]);
+            rest.push(r);
+            const k = key(rest);
+            if (!visited.has(k)) { visited.add(k); next.push(rest); }
+          }
+        }
+      }
+    }
+    if (visited.size > MAX) return depth;
+    frontier = next;
+  }
+  return Infinity;
+}
+
+/* ---- Calcul d'un score de manche --------------------------------------- */
+/* Le score dépend AVANT TOUT du nombre d'opérations : moins = mieux. */
+function computeScore({ usedOps, optimalOps, allNumbersUsed, usedHint, usedUndo, hadError, seconds, modMult, boost }) {
+  const breakdown = [];
+  let total = 300;
+  breakdown.push({ label: 'Cible déchiffrée', pts: 300 });
+
+  // Efficacité : −180 points par opération (1 op = 900, puis dégressif, plancher 80)
+  const ops = Math.max(1, usedOps || 1);
+  const eff = Math.max(80, 900 - (ops - 1) * 180);
+  total += eff;
+  breakdown.push({ label: 'Efficacité (' + ops + ' op.)', pts: eff });
+
+  // Bonus si la solution est optimale (aucune solution plus courte n'existe)
+  if (optimalOps && isFinite(optimalOps) && ops <= optimalOps) {
+    total += 300;
+    breakdown.push({ label: 'Solution optimale', pts: 300 });
+  }
+
+  if (allNumbersUsed) { total += 200; breakdown.push({ label: 'Tous les nombres', pts: 200 }); }
+  if (!usedHint)      { total += 150; breakdown.push({ label: 'Sans indice',      pts: 150 }); }
+  if (!usedUndo)      { total += 100; breakdown.push({ label: 'Sans annulation',  pts: 100 }); }
+  if (!hadError)      { total += 100; breakdown.push({ label: 'Zéro faute',       pts: 100 }); }
+
+  const timePts = Math.max(0, Math.round(200 * (1 - Math.min(seconds, 90) / 90)));
+  if (timePts > 0) { total += timePts; breakdown.push({ label: 'Rapidité', pts: timePts }); }
+
+  if (modMult && modMult !== 1) {
+    const before = total;
+    total = Math.round(total * modMult);
+    breakdown.push({ label: 'Multiplicateur cipher ×' + modMult, pts: total - before });
+  }
+  if (boost) {
+    const gain = total;
+    total = total * 2;
+    breakdown.push({ label: 'Circuit Boost ×2', pts: gain });
+  }
+
+  return { total, breakdown, coins: Math.ceil(total / 100) };
+}
+
+function starsFor({ usedOps, optimalOps, usedHint }) {
+  let s = 1;
+  if (!usedHint) s = 2;
+  if (!usedHint && optimalOps && isFinite(optimalOps) && (usedOps || 99) <= optimalOps) s = 3;
+  return s;
+}
+
+/* ---- Génère une cible solvable à partir de nombres FIXES, dans une plage --- */
+function makeTarget(numbers, lo, hi, allowDivide) {
+  const cfg = { tMin: lo, tMax: hi, allowDivide: allowDivide !== false };
+  for (let i = 0; i < 4000; i++) {
+    const b = buildSolvable(numbers, cfg);
+    if (b && !numbers.includes(b.target)) {
+      return { value: b.target, steps: b.steps, optimal: minOps(numbers, b.target, cfg.allowDivide) };
+    }
+  }
+  return null;
+}
+
+/* ---- Génère les cibles d'une mission satellite (X, Y, distance, fréquence) --- */
+function makeMission(numbers, ranges, allowDivide) {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const out = [];
+    let okAll = true;
+    for (const [lo, hi] of ranges) {
+      const t = makeTarget(numbers, lo, hi, allowDivide);
+      if (!t) { okAll = false; break; }
+      out.push(t);
+    }
+    if (okAll) return out;
+  }
+  return null;
+}
+
+/* ============================ JEU MINIMAL ============================ */
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('fr-FR');
+
+const CLEAN = [2, 5, 8, 10, 25, 50];
+const EXTERNALS = [3, 4, 6, 7, 9, 11];
+const EXT_POWER = 12, EXT_PREC = 10;          // l'unique effet : les secours coûtent puissance + précision
+const KEYS = [
+  {t:'+',k:'op'}, {t:'7',k:'d'}, {t:'8',k:'d'}, {t:'9',k:'d'},
+  {t:'−',k:'op'}, {t:'4',k:'d'}, {t:'5',k:'d'}, {t:'6',k:'d'},
+  {t:'×',k:'op'}, {t:'1',k:'d'}, {t:'2',k:'d'}, {t:'3',k:'d'},
+  {t:'÷',k:'op'}, {t:'0',k:'d'}, {t:'.',k:'dot'}, {t:'⌫',k:'back'},
+  {t:'CLR',k:'clr'}, {t:'ENTER',k:'ent'}
+];
+const MAX_DIGITS = 5;
+
+const state = {
+  score:0, round:1,
+  target:0, optimal:3,
+  tiles:[], entry:'', operandA:null, op:null, history:[], undoStack:[], _tid:1,
+  power:100, precision:100, usedExt:false,
+  time:90, timeMax:90, timerId:null, solved:false, sound:true
+};
+
+/* -------- audio -------- */
+let actx=null;
+function ac(){ if(!state.sound) return null; if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(actx.state==='suspended') actx.resume(); return actx; }
+function tone(f,d,t,g,w){ const c=ac(); if(!c) return; const s=(w||0)+c.currentTime; const o=c.createOscillator(),n=c.createGain(); o.type=t||'sine'; o.frequency.value=f; o.connect(n); n.connect(c.destination); n.gain.setValueAtTime(0.0001,s); n.gain.linearRampToValueAtTime(g||0.05,s+0.008); n.gain.exponentialRampToValueAtTime(0.0001,s+d); o.start(s); o.stop(s+d+0.02); }
+function beep(k){ switch(k){
+  case 'tap': tone(620,0.05,'square',0.035); break;
+  case 'op': tone(500,0.06,'sine',0.05); break;
+  case 'commit': tone(440,0.06,'sine',0.05); tone(660,0.09,'sine',0.045,0.05); break;
+  case 'ext': tone(300,0.1,'sawtooth',0.05); break;
+  case 'error': tone(150,0.16,'sawtooth',0.06); break;
+  case 'deny': tone(220,0.08,'square',0.04); break;
+  case 'win': [523,659,784,1046].forEach((f,i)=>tone(f,0.2,'sine',0.06,i*0.085)); break;
+  case 'fail': tone(300,0.2,'sawtooth',0.05); tone(180,0.3,'sawtooth',0.05,0.12); break;
+} }
+
+/* -------- utils -------- */
+function resetOp(){ state.entry=''; state.operandA=null; state.op=null; }
+function applyOp(a,op,b){ return op==='+'?a+b : op==='−'?a-b : op==='×'?a*b : a/b; }
+function isValidOp(a,op,b){ if(op==='÷') return b!==0 && a%b===0; if(op==='−') return a-b>0; return true; }
+function availableValue(v,ex){ return state.tiles.some(t=>t.value===v && t.id!==ex); }
+function setStatus(m){ $('statusMsg').textContent=m||''; }
+let toastTimer=null;
+function toast(m,ms){ const t=$('toast'); t.textContent=m; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,ms||2000); }
+function lcdDisplay(){ return state.entry!==''?state.entry:'0'; }
+function setLCD(){ const e=$('lcd'); e.className='lcd-text'; e.textContent=lcdDisplay(); }
+function flashLCD(v,cls){ const e=$('lcd'); e.className='lcd-text '+cls; e.textContent=String(v); setTimeout(()=>{ if($('lcd')===e){ e.className='lcd-text'; e.textContent=lcdDisplay(); } },700); }
+function denyTileEl(id){ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.classList.add('deny'); setTimeout(()=>el.classList.remove('deny'),320);} beep('deny'); }
+function glowValues(a,b){ const n=[...document.querySelectorAll('.tile')]; const na=n.find(x=>+x.dataset.val===a); if(na)na.classList.add('hintglow'); const nb=n.find(x=>x!==na && +x.dataset.val===b); if(nb)nb.classList.add('hintglow'); }
+function highlightIds(){ const ids={a:null,b:null}; const av=state.entry===''?null:Number(state.entry);
+  if(state.op===null){ if(av!==null){ const t=state.tiles.find(x=>x.value===av); if(t)ids.a=t.id; } }
+  else { const ta=state.tiles.find(x=>x.value===state.operandA); if(ta)ids.a=ta.id; if(av!==null){ const tb=state.tiles.find(x=>x.value===av && x.id!==ids.a); if(tb)ids.b=tb.id; } }
+  return ids; }
+
+/* -------- render -------- */
+function renderTiles(){
+  const hi=highlightIds(); const c=$('tiles'); c.innerHTML='';
+  state.tiles.forEach(t=>{ const b=document.createElement('button');
+    b.className='tile'+(t.ext?' ext':(t.derived?' derived':''))+(hi.a===t.id?' sel-a':'')+(hi.b===t.id?' sel-b':'');
+    b.dataset.id=t.id; b.dataset.val=t.value; b.textContent=t.value; b.addEventListener('click',()=>tileClick(t.id)); c.appendChild(b); });
+}
+function renderExts(){
+  const c=$('exts'); c.innerHTML='';
+  EXTERNALS.forEach(v=>{ const b=document.createElement('button'); b.className='ext'; b.textContent=v;
+    b.disabled = state.solved; b.onclick=()=>summon(v); c.appendChild(b); });
+}
+function renderLog(){
+  const c=$('log'); c.innerHTML='';
+  if(!state.history.length){ c.innerHTML='<div class="log-empty">— En attente de saisie —</div>'; return; }
+  state.history.forEach((h,i)=>{ const won=(h.r===state.target && i===state.history.length-1);
+    const row=document.createElement('div'); row.className='log-row'+(won?' win':'');
+    row.innerHTML='<span class="i">'+(i+1)+'</span><span>'+h.a+'</span><span class="op">'+h.op+'</span><span>'+h.b+'</span><span>=</span><span class="r">'+h.r+'</span>'+(won?' ✔':'');
+    c.appendChild(row); });
+}
+function renderOpActive(){ document.querySelectorAll('.k.opk').forEach(k=>k.classList.toggle('active', !!state.op && k.dataset.op===state.op)); }
+function renderGauges(){
+  const p=Math.round(state.power), pr=Math.round(state.precision);
+  $('powerPct').textContent=p+'%'; $('powerBar').style.width=p+'%';
+  $('precPct').textContent=pr+'%'; $('precBar').style.width=pr+'%';
+}
+function renderTimer(){
+  const t=Math.max(0,state.time); const m=Math.floor(t/60), s=t%60;
+  const el=$('timer'); el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  el.className='timer'+(t<=10?' crit':(t<=25?' warn':''));
+  $('timerBar').style.width=(t/state.timeMax*100)+'%';
+}
+function renderMeta(){ $('score').textContent=fmt(state.score); $('round').textContent=state.round; }
+function renderTarget(){ const el=$('target'); el.textContent=state.target; el.className='target-num'+(state.solved?' done':''); }
+function renderAll(){ renderTarget(); renderTiles(); renderExts(); renderLog(); renderOpActive(); renderGauges(); renderTimer(); renderMeta(); }
+
+/* -------- interaction -------- */
+function digitPress(d){ if(state.solved) return; if(state.entry==='' && d==='0'){ beep('deny'); return; } if(state.entry.length>=MAX_DIGITS){ beep('deny'); return; } state.entry+=d; setLCD(); beep('tap'); renderTiles(); }
+function backspace(){ if(state.entry.length){ state.entry=state.entry.slice(0,-1); setLCD(); beep('tap'); renderTiles(); } }
+function pushUndo(){ state.undoStack.push(state.tiles.map(t=>({id:t.id,value:t.value,derived:t.derived,ext:t.ext}))); }
+function tileClick(id){ if(state.solved) return; const tile=state.tiles.find(t=>t.id===id); if(!tile) return; state.entry=String(tile.value); setLCD(); beep('tap'); renderTiles(); }
+function opClick(op){
+  if(state.solved) return;
+  if(state.op===null){
+    if(state.entry===''){ setStatus('Tape ou choisis un premier nombre'); beep('deny'); return; }
+    const v=Number(state.entry);
+    if(!availableValue(v,null)){ setStatus('Nombre '+v+' indisponible'); beep('deny'); state.entry=''; setLCD(); renderTiles(); return; }
+    state.operandA=v; state.op=op; state.entry=''; setLCD(); beep('op'); renderTiles(); renderOpActive();
+  } else { state.op=op; beep('op'); renderOpActive(); }
+}
+function equals(){
+  if(state.solved) return;
+  if(state.op===null || state.operandA===null){ setStatus('Choisis un nombre, un opérateur, puis un nombre'); beep('deny'); return; }
+  if(state.entry===''){ setStatus('Tape le second nombre'); beep('deny'); return; }
+  const b=Number(state.entry);
+  const ta=state.tiles.find(t=>t.value===state.operandA);
+  if(!ta){ setStatus('Nombre '+state.operandA+' indisponible'); beep('deny'); resetOp(); setLCD(); renderTiles(); return; }
+  const tb=state.tiles.find(t=>t.value===b && t.id!==ta.id);
+  if(!tb){ setStatus(state.operandA===b?('Il te faut deux tuiles « '+b+' »'):('Nombre '+b+' indisponible')); beep('deny'); state.entry=''; setLCD(); renderTiles(); return; }
+  const a=ta.value, op=state.op;
+  if(!isValidOp(a,op,b)){ flashLCD('ERR','err'); beep('error'); setStatus(op==='÷'?'Division non entière interdite':'Résultat négatif interdit'); denyTileEl(ta.id); denyTileEl(tb.id); state.entry=''; renderTiles(); return; }
+  const r=applyOp(a,op,b);
+  pushUndo();
+  state.tiles=state.tiles.filter(t=>t.id!==ta.id && t.id!==tb.id);
+  state.tiles.push({id:'t'+(state._tid++),value:r,derived:true,ext:false});
+  state.history.push({a,op,b,r});
+  resetOp(); flashLCD(r,'win'); beep('commit'); renderAll();
+  if(r===state.target){ win(); return; }
+  // impasse propre ?
+  const vals=state.tiles.map(t=>t.value);
+  if(!vals.includes(state.target) && !isReachable(vals,state.target,true)) toast('Plus de solution — CLR ×2 pour recommencer, ou utilise un nombre de secours',3400);
+}
+function clearEntry(){
+  if(state.solved) return;
+  if(state.entry!==''){ state.entry=''; setStatus(''); }
+  else if(state.operandA!==null || state.op!==null){ resetOp(); setStatus(''); }
+  else { resetBoard(); return; }
+  setLCD(); beep('tap'); renderTiles(); renderOpActive();
+}
+function resetBoard(){
+  state.tiles=CLEAN.map(v=>({id:'t'+(state._tid++),value:v,derived:false,ext:false}));
+  resetOp(); state.history=[]; state.undoStack=[]; setStatus('Décodage réinitialisé'); setLCD(); beep('op'); renderAll();
+}
+function summon(v){
+  if(state.solved) return;
+  state.usedExt=true;
+  state.power=Math.max(0,state.power-EXT_POWER);
+  state.precision=Math.max(0,state.precision-EXT_PREC);
+  state.tiles.push({id:'t'+(state._tid++),value:v,derived:false,ext:true});
+  toast('Nombre de secours '+v+' ajouté (−'+EXT_POWER+' puissance, −'+EXT_PREC+' précision)',2600);
+  beep('ext'); renderTiles(); renderGauges();
+}
+
+/* -------- timer + round -------- */
+function stopTimer(){ if(state.timerId){ clearInterval(state.timerId); state.timerId=null; } }
+function tick(){ state.time--; renderTimer(); if(state.time<=0){ stopTimer(); fail(); } }
+function startTimer(){ stopTimer(); state.timerId=setInterval(tick,1000); }
+
+function newRound(){
+  const lo=100, hi=Math.min(900, 400 + state.round*25);
+  const t=makeTarget(CLEAN, lo, hi, true);
+  state.target = t ? t.value : 487;
+  state.optimal = t ? (t.optimal||3) : 3;
+  state.tiles=CLEAN.map(v=>({id:'t'+(state._tid++),value:v,derived:false,ext:false}));
+  resetOp(); state.history=[]; state.undoStack=[];
+  state.power=100; state.precision=100; state.usedExt=false; state.solved=false;
+  state.timeMax = Math.max(55, 95 - state.round*2); state.time=state.timeMax;
+  setStatus(''); setLCD(); renderAll(); startTimer();
+}
+function win(){
+  state.solved=true; stopTimer();
+  const power=Math.round(state.power), prec=Math.round(state.precision), tleft=Math.max(0,state.time);
+  const usedExt = state.usedExt;
+  let reward = Math.round(power*3 + prec*3 + tleft*4);
+  if(!usedExt) reward += 200;
+  state.score += reward;
+  saveState(); renderTarget(); renderExts(); beep('win');
+  showResult(true, {power,prec,tleft,reward,usedExt});
+}
+function fail(){
+  state.solved=true;
+  renderTarget(); renderExts(); beep('fail');
+  showResult(false, {power:Math.round(state.power),prec:Math.round(state.precision),tleft:0,reward:0,usedExt:state.tiles.some(t=>t.ext)});
+}
+function showResult(ok, d){
+  const o=$('resultOverlay');
+  o.innerHTML=
+    '<div class="modal">'+
+      '<div class="m-title '+(ok?'ok':'bad')+'">'+(ok?'COORDONNÉE TRANSMISE':'HORS DÉLAI')+'</div>'+
+      '<div class="m-sub">'+(ok?('Cible '+state.target+' atteinte'):('Cible '+state.target+' non décodée à temps'))+'</div>'+
+      '<div class="recap">'+
+        '<div class="row"><span>Puissance</span><b class="'+(d.power>=70?'g':'o')+'">'+d.power+'%</b></div>'+
+        '<div class="row"><span>Précision</span><b class="'+(d.prec>=70?'g':'o')+'">'+d.prec+'%</b></div>'+
+        '<div class="row"><span>Temps restant</span><b>'+d.tleft+' s</b></div>'+
+        (ok && !d.usedExt ? '<div class="row"><span>Transmission propre</span><b class="g">+200</b></div>' : '')+
+        '<div class="reward"><span>Crédits</span><b>+'+fmt(d.reward)+'</b></div>'+
+      '</div>'+
+      '<button class="mbtn" id="nextBtn">'+(ok?'Coordonnée suivante':'Réessayer')+'</button>'+
+    '</div>';
+  o.hidden=false;
+  $('nextBtn').onclick=()=>{ o.hidden=true; if(ok) state.round++; newRound(); };
+}
+
+/* -------- keypad -------- */
+function buildPad(){
+  const pad=$('pad'); pad.innerHTML='';
+  const COLS=[0.4799,0.5586,0.6374,0.7167];
+  const ROWS=[0.2993,0.4092,0.5209,0.6346];
+  const HOT=[
+    {cls:'digit',t:'7',x:COLS[0],y:ROWS[0]},{cls:'digit',t:'8',x:COLS[1],y:ROWS[0]},{cls:'digit',t:'9',x:COLS[2],y:ROWS[0]},{cls:'opk',op:'+',x:COLS[3],y:ROWS[0]},
+    {cls:'digit',t:'4',x:COLS[0],y:ROWS[1]},{cls:'digit',t:'5',x:COLS[1],y:ROWS[1]},{cls:'digit',t:'6',x:COLS[2],y:ROWS[1]},{cls:'opk',op:'−',x:COLS[3],y:ROWS[1]},
+    {cls:'digit',t:'1',x:COLS[0],y:ROWS[2]},{cls:'digit',t:'2',x:COLS[1],y:ROWS[2]},{cls:'digit',t:'3',x:COLS[2],y:ROWS[2]},{cls:'opk',op:'×',x:COLS[3],y:ROWS[2]},
+    {cls:'clr',t:'C',x:COLS[0],y:ROWS[3]},{cls:'digit',t:'0',x:COLS[1],y:ROWS[3]},{cls:'back',t:'⌫',x:COLS[2],y:ROWS[3]},{cls:'opk',op:'÷',x:COLS[3],y:ROWS[3]},
+    {cls:'ent',x:0.8793,y:0.6103,w:9.4,h:13}
+  ];
+  HOT.forEach(h=>{ const b=document.createElement('button');
+    b.className='k '+h.cls;
+    if(h.cls==='opk') b.dataset.op=h.op;
+    if(h.cls==='digit') b.dataset.d=h.t;
+    const w=h.w||7.2, ht=h.h||9.6;
+    b.style.left=(h.x*100-w/2)+'%'; b.style.top=(h.y*100-ht/2)+'%';
+    b.style.width=w+'%'; b.style.height=ht+'%';
+    pad.appendChild(b); });
+  pad.addEventListener('click',onKey);
+}
+function onKey(e){ const b=e.target.closest('.k'); if(!b) return; b.classList.add('press'); setTimeout(()=>b.classList.remove('press'),90);
+  if(b.classList.contains('opk')){ opClick(b.dataset.op); return; }
+  if(b.classList.contains('ent')){ equals(); return; }
+  if(b.classList.contains('clr')){ clearEntry(); return; }
+  if(b.classList.contains('back')){ backspace(); return; }
+  if(b.classList.contains('dot')){ beep('deny'); toast('Pas de décimales'); return; }
+  if(b.classList.contains('digit')){ digitPress(b.dataset.d); }
+}
+function pressEl(s){ const b=document.querySelector(s); if(b){ b.classList.add('press'); setTimeout(()=>b.classList.remove('press'),90); } }
+document.addEventListener('keydown',e=>{
+  if(!$('resultOverlay').hidden){ if(e.key==='Enter'){ const n=$('nextBtn'); if(n) n.click(); } return; }
+  const k=e.key;
+  if(k>='0'&&k<='9'){ digitPress(k); pressEl('.k.digit[data-d="'+k+'"]'); }
+  else if(k==='+'){ opClick('+'); pressEl('.k.opk[data-op="+"]'); }
+  else if(k==='-'){ opClick('−'); pressEl('.k.opk[data-op="−"]'); }
+  else if(k==='*'||k==='x'||k==='X'){ opClick('×'); pressEl('.k.opk[data-op="×"]'); }
+  else if(k==='/'){ e.preventDefault(); opClick('÷'); pressEl('.k.opk[data-op="÷"]'); }
+  else if(k==='Enter'||k==='='){ e.preventDefault(); equals(); pressEl('.k.ent'); }
+  else if(k==='Backspace'){ e.preventDefault(); backspace(); pressEl('.k.back'); }
+  else if(k==='Escape'||k==='c'||k==='C'){ clearEntry(); pressEl('.k.clr'); }
+});
+
+/* -------- persistance -------- */
+const SAVE_KEY='coord_save_v1';
+const store={ ok:false,
+  init(){ try{ const k='__c__'; window.localStorage.setItem(k,'1'); window.localStorage.removeItem(k); this.ok=true; }catch(e){ this.ok=false; } },
+  get(){ if(!this.ok) return null; try{ const s=window.localStorage.getItem(SAVE_KEY); return s?JSON.parse(s):null; }catch(e){ return null; } },
+  set(o){ if(!this.ok) return; try{ window.localStorage.setItem(SAVE_KEY,JSON.stringify(o)); }catch(e){} }
+};
+store.init();
+function saveState(){ store.set({score:state.score,round:state.round}); }
+function loadState(){ const s=store.get(); if(!s) return; if(typeof s.score==='number') state.score=s.score; if(typeof s.round==='number'&&s.round>=1) state.round=s.round; }
+
+/* -------- init -------- */
+loadState();
+buildPad();
+newRound();
+window.CC = state;
+</script>
+</body>
+</html>
