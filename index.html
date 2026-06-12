@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a141c">
+<title>Orbital Communications Bureau — Relay Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg0:#081019; --bg1:#0b1620; --panel:#0e1c28; --panel2:#0a1620;
+  --bezel:#23435a; --bezel2:#356079; --line:#15303d;
+  --orange:#d2842e; --orange2:#ef9a3c; --amber:#e2b24a;
+  --green:#5fae5f; --green2:#86e89a; --red:#c0503a; --red2:#e8674a;
+  --paper:#d9c49a; --ink:#3a2c16; --ink2:#5a4426;
+  --txt:#cfe0e4; --dim:#79929d; --dim2:#52707c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:'Oswald','Arial Narrow',sans-serif;color:var(--txt);
+  background:
+    radial-gradient(80% 90% at 88% 100%, rgba(40,90,130,.30) 0%, rgba(20,45,70,.08) 35%, transparent 60%),
+    radial-gradient(120% 100% at 50% 0%, #122031 0%, var(--bg1) 48%, var(--bg0) 100%);
+  min-height:100vh;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.5),transparent),
+   radial-gradient(1px 1px at 70% 20%,rgba(255,255,255,.4),transparent),
+   radial-gradient(1px 1px at 40% 70%,rgba(255,255,255,.35),transparent),
+   radial-gradient(1px 1px at 85% 60%,rgba(255,255,255,.45),transparent),
+   radial-gradient(1px 1px at 15% 80%,rgba(255,255,255,.3),transparent),
+   radial-gradient(1px 1px at 60% 85%,rgba(255,255,255,.35),transparent),
+   radial-gradient(1px 1px at 90% 35%,rgba(255,255,255,.4),transparent);
+  background-repeat:no-repeat;opacity:.7}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+.mono{font-family:'Share Tech Mono',monospace}
+
+.app{position:relative;z-index:1;display:grid;grid-template-columns:284px minmax(0,1fr) 320px;
+  gap:14px;max-width:1500px;margin:0 auto;padding:14px;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* ---------- generic panel ---------- */
+.panel{position:relative;background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--bezel);border-radius:11px;padding:13px 14px;
+  box-shadow:inset 0 1px 0 rgba(130,190,210,.06), inset 0 0 26px rgba(0,0,0,.28), 0 8px 18px rgba(0,0,0,.4)}
+.panel::before,.panel::after{content:"";position:absolute;width:5px;height:5px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#5c8194,#1a2c36);box-shadow:0 0 2px rgba(0,0,0,.6)}
+.panel::before{top:7px;left:7px}.panel::after{top:7px;right:7px}
+.ph{display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);
+  border-bottom:1px solid var(--line);padding-bottom:7px;margin-bottom:10px}
+.ph .v{color:var(--dim);font-family:'Share Tech Mono',monospace;letter-spacing:.04em}
+
+/* ---------- OPERATOR ---------- */
+.op-card{display:flex;gap:12px;align-items:flex-start}
+.avatar{flex:0 0 64px;width:64px;height:64px;border-radius:8px;border:1px solid var(--bezel2);
+  background:linear-gradient(180deg,#16303f,#0c1d28);overflow:hidden;position:relative}
+.avatar svg{position:absolute;inset:0;width:100%;height:100%}
+.op-info{flex:1;min-width:0}
+.op-lbl{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.op-name{font-size:21px;font-weight:700;letter-spacing:.02em;color:#e9f1f2;line-height:1.05;margin-bottom:5px}
+.op-row{font-family:'Share Tech Mono',monospace;font-size:11.5px;color:var(--dim);letter-spacing:.02em;line-height:1.5}
+.op-row b{color:var(--amber);font-weight:400}
+.op-row b.g{color:var(--green2)}
+.op-dots{display:flex;gap:4px;margin-left:auto}
+.op-dots i{width:6px;height:6px;border-radius:50%;background:#2a4a3a}
+.op-dots i.on{background:var(--green2);box-shadow:0 0 5px var(--green2)}
+
+/* ---------- streak ---------- */
+.streak{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.wt{width:20px;height:26px;border-radius:3px;border:1px solid #5a3a1e;background:#2a1c10;position:relative;opacity:.35}
+.wt.on{opacity:1;background:linear-gradient(180deg,#d2842e,#9a5a1e);border-color:#e2a24a;box-shadow:0 0 6px rgba(210,132,46,.4)}
+.wt::before{content:"";position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:2px;height:5px;background:inherit;border-radius:2px}
+.wt::after{content:"";position:absolute;top:5px;left:3px;right:3px;height:4px;border-radius:1px;background:rgba(0,0,0,.35)}
+
+/* ---------- score ---------- */
+.score-big{font-family:'Share Tech Mono',monospace;font-size:34px;font-weight:700;color:var(--orange2);
+  text-shadow:0 0 14px rgba(239,154,60,.3);line-height:1}
+.score-next{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-top:8px}
+.mbar{height:8px;background:#06121a;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-top:5px}
+.mbar>i{display:block;height:100%;border-radius:5px;transition:width .4s}
+.fill-orange{background:linear-gradient(90deg,#9a5a1e,var(--orange2))}
+.fill-amber{background:linear-gradient(90deg,#a87d2c,var(--amber))}
+.fill-green{background:linear-gradient(90deg,#3f8a4a,var(--green2))}
+.signal-ico{display:flex;gap:2px;align-items:flex-end;height:16px}
+.signal-ico i{width:3px;background:var(--green2);border-radius:1px}
+.signal-ico i:nth-child(1){height:5px}.signal-ico i:nth-child(2){height:8px}.signal-ico i:nth-child(3){height:11px}.signal-ico i:nth-child(4){height:15px;opacity:.4}
+
+/* ---------- daily cipher ---------- */
+.cipher{display:flex;gap:11px;align-items:flex-start}
+.die{flex:0 0 40px;width:40px;height:40px;border-radius:8px;background:linear-gradient(180deg,#eef0ee,#c4c8c4);
+  position:relative;box-shadow:inset 0 -3px 6px rgba(0,0,0,.2),0 2px 4px rgba(0,0,0,.4)}
+.die i{position:absolute;width:7px;height:7px;border-radius:50%;background:#1a1a1a}
+.die i:nth-child(1){top:6px;left:6px}.die i:nth-child(2){top:6px;right:6px}
+.die i:nth-child(3){bottom:6px;left:6px}.die i:nth-child(4){bottom:6px;right:6px}
+.die i:nth-child(5){top:50%;left:50%;transform:translate(-50%,-50%)}
+.cipher-name{font-size:15px;font-weight:600;color:#e9f1f2}
+.cipher-desc{font-size:11.5px;color:var(--dim);line-height:1.35;margin:2px 0 5px}
+.cipher-time{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--orange2);display:flex;align-items:center;gap:5px}
+.cipher-time::before{content:"";width:9px;height:9px;border:1.5px solid var(--orange2);border-radius:50%;position:relative}
+
+/* ---------- signal tools ---------- */
+.tools2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tool2{border:1px solid var(--bezel);border-radius:8px;padding:9px;background:rgba(10,22,30,.5);text-align:center}
+.tool2 .tn{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);min-height:24px;display:flex;align-items:center;justify-content:center}
+.tool2 .ti{height:30px;display:flex;align-items:center;justify-content:center;color:var(--amber);margin:3px 0}
+.tool2 .tx{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--orange2)}
+
+/* ---------- currencies ---------- */
+.currencies{display:flex;gap:10px;justify-content:flex-end}
+.cur{display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--bezel);border-radius:9px;padding:8px 10px;box-shadow:0 6px 14px rgba(0,0,0,.4)}
+.cur .ico{color:var(--amber);display:flex}
+.cur .amt{font-family:'Share Tech Mono',monospace;font-size:17px;font-weight:700;color:#eaf2f3}
+.cur .plus{width:20px;height:20px;border-radius:5px;border:1px solid var(--bezel2);color:var(--green2);
+  font-size:15px;display:flex;align-items:center;justify-content:center;background:rgba(95,174,95,.08)}
+
+/* ================= BOARD (parchment) ================= */
+.board{position:relative;width:100%;aspect-ratio:1833/1366;
+  background:url('assets/game_board.png') center/100% 100% no-repeat;
+  filter:drop-shadow(0 14px 22px rgba(0,0,0,.55))}
+.board-inner{position:absolute;left:8%;top:7.5%;right:8%;bottom:7%;display:flex;flex-direction:column}
+.bh{text-align:center;position:relative}
+.bh .bureau{font-size:clamp(10px,1.7vw,15px);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4a3418}
+.bh .freq-lbl{font-size:clamp(9px,1.5vw,13px);letter-spacing:.22em;text-transform:uppercase;color:#6a4f28;margin-top:7px}
+.target-num{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:clamp(38px,7.6vw,68px);line-height:.9;color:#b4502a;letter-spacing:.03em;text-align:center}
+.target-num.done{color:#2f7a3a}
+.tstatus{display:none}
+.stamp{position:absolute;top:-2%;left:0;border:2px solid #9a3a2a;color:#9a3a2a;font-size:clamp(8px,1.3vw,12px);
+  font-weight:700;letter-spacing:.12em;padding:2px 8px;transform:rotate(-7deg);border-radius:2px;opacity:.82}
+.dish{position:absolute;top:-6%;right:-1%;width:clamp(46px,8vw,78px);height:clamp(46px,8vw,78px);border-radius:50%;
+  border:2px solid #6a4f28;color:#5a4220;display:flex;align-items:center;justify-content:center;opacity:.7;
+  font-size:6px;text-align:center;background:radial-gradient(circle,rgba(120,90,40,.08),transparent)}
+.b-divider{border-top:1.5px solid rgba(58,42,22,.4);margin:2.5% 0 1.5%}
+.b-sub{font-size:clamp(8px,1.3vw,11px);letter-spacing:.18em;text-transform:uppercase;color:#7a5e30;text-align:center;font-weight:600}
+.tiles{display:flex;gap:1.4%;justify-content:space-between;margin-top:1.6%}
+.tile{flex:1;aspect-ratio:1/.74;border:2px solid #5a4426;border-radius:7px;
+  background:linear-gradient(180deg,#f1e7cd,#e2d4b2);color:#2a2010;font-weight:700;
+  font-family:'Share Tech Mono',monospace;font-size:clamp(16px,3.4vw,30px);
+  display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 #5a4426;transition:.1s}
+.tile:hover{transform:translateY(-2px);border-color:#2a2010}
+.tile.derived{border-color:#9a7322;color:#7a5212;background:linear-gradient(180deg,#f1e3bd,#e2cf9e)}
+.tile.ext{border-color:#9a3a2a;color:#8a2e1a;background:linear-gradient(180deg,#efddc9,#e2c6ad)}
+.tile.sel-a{border-color:var(--orange);box-shadow:0 0 0 3px rgba(210,132,46,.4),0 2px 0 #5a4426}
+.tile.sel-b{border-color:#3a78a8;box-shadow:0 0 0 3px rgba(58,120,168,.4),0 2px 0 #5a4426}
+.tile.hintglow{animation:hint 1.1s ease-in-out 3}.tile.deny{animation:shake .3s}
+@keyframes hint{0%,100%{box-shadow:0 2px 0 #5a4426}50%{box-shadow:0 0 0 4px rgba(202,162,60,.6),0 2px 0 #5a4426}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.routebox{flex:1;margin-top:1.4%;overflow:hidden;display:flex;flex-direction:column}
+.log{flex:1;overflow:hidden}
+.log-empty{font-size:clamp(8px,1.3vw,12px);color:#9a7a48;letter-spacing:.05em;text-transform:uppercase;text-align:center;padding-top:4%}
+.log-row{display:grid;grid-template-columns:auto 1fr auto 1fr auto 1.2fr auto;align-items:center;gap:2.5%;
+  font-family:'Share Tech Mono',monospace;font-size:clamp(11px,2.3vw,21px);color:#3a2c16;
+  padding:.7% 1%;border-bottom:1px dashed rgba(58,42,22,.35)}
+.log-row:last-child{border-bottom:none}
+.log-row .i{width:clamp(18px,2.6vw,26px);height:clamp(18px,2.6vw,26px);background:#3a5a8a;color:#eaf2f3;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.7vw,15px);font-weight:700}
+.log-row .op{color:#b4502a;font-weight:700;text-align:center}
+.log-row .r{color:#2a2010;font-weight:700}
+.log-row.win .i{background:var(--orange)}.log-row.win .r{color:#b4502a}
+.backup{display:flex;align-items:center;gap:6px;margin-top:1%;flex-wrap:wrap}
+.backup .bl{font-size:clamp(7px,1.1vw,10px);letter-spacing:.1em;text-transform:uppercase;color:#9a3a2a}
+.exts{display:flex;gap:5px;flex-wrap:wrap}
+.ext{width:clamp(22px,3vw,30px);aspect-ratio:1/.86;border:1px solid #9a3a2a;border-radius:4px;background:rgba(154,58,42,.1);
+  color:#8a2e1a;font-family:'Share Tech Mono',monospace;font-size:clamp(10px,1.8vw,15px);display:flex;align-items:center;justify-content:center}
+.ext:hover:not(:disabled){background:rgba(154,58,42,.22);transform:translateY(-1px)}
+.ext:disabled{opacity:.3;cursor:not-allowed}
+
+/* ================= CONSOLE (machine) ================= */
+.console-wrap{position:relative;width:100%;aspect-ratio:3530/2058;
+  background:url('assets/game_machine.png') center/100% 100% no-repeat;
+  filter:drop-shadow(0 16px 26px rgba(0,0,0,.5));transition:filter .2s}
+.console-wrap.frozen{filter:drop-shadow(0 0 24px rgba(90,170,230,.6)) brightness(1.04) saturate(1.2)}
+.console-wrap>div{position:absolute}
+.con-title{left:30%;top:2.5%;width:40%;text-align:center;font-size:clamp(7px,1.05vw,11px);
+  letter-spacing:.12em;text-transform:uppercase;color:#7fb0c0;font-family:'Share Tech Mono',monospace}
+/* orbit map on left screen */
+.orbit{left:6.8%;top:13.5%;width:33.8%;height:50%;overflow:hidden;border-radius:3px}
+.orbit svg{width:100%;height:100%}
+.orbit .om-lbl{position:absolute;top:5%;left:7%;font-size:clamp(6px,1vw,9px);letter-spacing:.1em;color:#4d8a6a;font-family:'Share Tech Mono',monospace}
+.orbit .sat-l{position:absolute;font-size:clamp(5px,.85vw,8px);color:#6aa888;font-family:'Share Tech Mono',monospace}
+/* lcd */
+.lcd-zone{left:45.3%;top:8.6%;width:29.1%;height:3.5%;display:flex;align-items:center;justify-content:center}
+.lcd-zone .cvl{font-size:clamp(6px,.95vw,9px);letter-spacing:.18em;color:#5fae7f;font-family:'Share Tech Mono',monospace}
+.m-lcd{left:45.3%;top:10.6%;width:29.1%;height:12.6%;display:flex;align-items:center;justify-content:flex-end;padding:0 5%;overflow:hidden}
+.lcd-text{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:clamp(18px,4.4vw,38px);
+  color:#74d68a;text-shadow:0 0 9px rgba(120,240,150,.6);letter-spacing:.04em}
+.lcd-text.win{color:#aaffbf}.lcd-text.err{color:#ff9483;text-shadow:0 0 10px rgba(255,90,60,.7)}
+/* LEDs */
+.leds{left:78.3%;top:15.5%;width:14.5%;height:25%;display:flex;flex-direction:column;justify-content:center;gap:9%;padding-left:4%}
+.led{display:flex;align-items:center;gap:7%;font-family:'Share Tech Mono',monospace;font-size:clamp(6px,1vw,10px);letter-spacing:.08em;color:#7fb0c0}
+.led i{width:clamp(6px,1vw,9px);height:clamp(6px,1vw,9px);border-radius:50%;background:#1c3a2a;flex:0 0 auto}
+.led.on i{background:var(--green2);box-shadow:0 0 6px var(--green2)}
+.led.alert i{background:var(--red2);box-shadow:0 0 6px var(--red2)}
+.led.alert.dim i{background:#3a1c1a;box-shadow:none}
+/* transmit label */
+.tx-lbl{left:78%;top:43%;width:15%;text-align:center;font-size:clamp(6px,1vw,10px);letter-spacing:.12em;color:#7fc090;font-family:'Share Tech Mono',monospace}
+/* keypad hotspots */
+.pad{position:absolute;inset:0}
+.k{position:absolute;background:transparent;border:0;border-radius:11px;cursor:pointer;transition:background .08s,box-shadow .08s}
+.k:hover{background:rgba(255,255,255,.07)}
+.k.press,.k:active{background:rgba(255,255,255,.16)}
+.k.clr.press,.k.clr:active{background:rgba(255,120,90,.22)}
+.k.ent{border-radius:15px}.k.ent:hover{background:rgba(140,255,170,.12)}
+.k.ent.press,.k.ent:active{background:rgba(140,255,170,.28);box-shadow:0 0 18px rgba(120,255,150,.5)}
+.k.opk.active{background:rgba(236,191,90,.18);box-shadow:0 0 0 3px rgba(236,191,90,.7),0 0 16px rgba(236,191,90,.45)}
+
+/* bottom status bar */
+.statusbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:11px 14px}
+.align{flex:1;min-width:160px}
+.align .al-top{display:flex;justify-content:space-between;align-items:baseline;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.align .al-top b{font-family:'Share Tech Mono',monospace;color:var(--amber)}
+.segbar{height:12px;display:flex;gap:3px}
+.segbar i{flex:1;border-radius:2px;background:#0a1822;border:1px solid var(--line)}
+.segbar i.on{background:var(--orange2);border-color:var(--orange2);box-shadow:0 0 5px rgba(239,154,60,.4)}
+.segbar i.on.g{background:var(--green2);border-color:var(--green2);box-shadow:0 0 5px rgba(134,232,154,.4)}
+.sysbtns{display:flex;gap:8px}
+.sysbtn{display:flex;align-items:center;gap:5px;border:1px solid var(--bezel);border-radius:7px;padding:6px 11px;
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:rgba(10,22,30,.5)}
+.sysbtn:hover{color:var(--amber);border-color:var(--bezel2)}
+.foot{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim2);letter-spacing:.06em;padding:2px 4px}
+.foot .st{color:var(--amber)}
+
+/* ---------- right power-ups ---------- */
+.pu{display:flex;gap:11px;align-items:flex-start;cursor:pointer;transition:.12s}
+.pu:hover{transform:translateX(-2px)}
+.pu .pu-ico{flex:0 0 46px;width:46px;height:46px;border-radius:9px;border:1px solid var(--bezel2);
+  background:linear-gradient(180deg,#142c3a,#0b1a24);display:flex;align-items:center;justify-content:center;color:var(--amber)}
+.pu.heart .pu-ico{color:#e06a6a}.pu.snow .pu-ico{color:#7fc6e8}
+.pu-body{flex:1;min-width:0}
+.pu-name{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#e9f1f2}
+.pu-desc{font-size:11px;color:var(--dim);line-height:1.32;margin-top:2px}
+.pu-cnt{flex:0 0 auto;width:24px;height:24px;border:1px solid var(--bezel2);border-radius:6px;
+  font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--amber);display:flex;align-items:center;justify-content:center;background:rgba(226,178,74,.07)}
+.integrity{display:flex;align-items:center;gap:12px}
+.integ-l{flex:1}
+.integ-l .il{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.integ-big{font-family:'Share Tech Mono',monospace;font-size:22px;font-weight:700;color:var(--green2)}
+
+/* overlay + modal + toast */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(4,9,12,.85);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.overlay[hidden]{display:none}
+.modal{position:relative;max-width:420px;width:100%;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--amber);border-radius:11px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.7);text-align:center}
+.m-title{font-size:27px;font-weight:700;letter-spacing:.04em;margin-bottom:4px}
+.m-title.ok{color:var(--green2)}.m-title.bad{color:var(--orange2)}
+.m-sub{color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:14px}
+.recap{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;margin-bottom:14px;font-family:'Share Tech Mono',monospace;font-size:13px}
+.recap .row{display:flex;justify-content:space-between;padding:3px 4px;color:var(--txt)}
+.recap .row b{color:#e4eef0}.recap .row .g{color:var(--green2)}.recap .row .o{color:var(--orange2)}
+.recap .reward{display:flex;justify-content:space-between;font-size:17px;margin-top:6px;padding-top:7px;border-top:1px dashed var(--line);color:#eaf2ef}
+.recap .reward b{color:var(--amber);font-weight:700}
+.mbtn{display:block;width:100%;padding:13px;border-radius:8px;background:linear-gradient(180deg,#3f8a4f,#2c6439);color:#eafff0;font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 3px 0 #1d4226}
+.mbtn:active{transform:translateY(3px);box-shadow:0 0 0 #1d4226}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;background:#0d2230;border:1px solid var(--amber);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--txt);box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:84vw;text-align:center}
+.toast[hidden]{display:none}
+
+@media (max-width:1180px){ .app{grid-template-columns:1fr;max-width:680px} .col.right{order:3} }
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ============ LEFT ============ -->
+  <aside class="col left">
+    <section class="panel">
+      <div class="op-card">
+        <div class="avatar">
+          <svg viewBox="0 0 64 64"><g fill="none" stroke="#6fb0c8" stroke-width="2.4">
+            <circle cx="32" cy="25" r="11" fill="#1d3a4a"/>
+            <path d="M14 56c2-12 11-18 18-18s16 6 18 18" fill="#1d3a4a"/>
+            <path d="M18 26a14 14 0 0 1 28 0"/><rect x="14" y="26" width="6" height="11" rx="2" fill="#234a5c"/>
+            <rect x="44" y="26" width="6" height="11" rx="2" fill="#234a5c"/><path d="M47 37c0 4-4 6-8 6"/>
+          </g></svg>
+        </div>
+        <div class="op-info">
+          <div style="display:flex;align-items:center"><span class="op-lbl">Operator</span>
+            <span class="op-dots"><i class="on"></i><i class="on"></i><i></i></span></div>
+          <div class="op-name">CalCrafter</div>
+          <div class="op-row">RANK: <b id="rankName">NOVICE I</b></div>
+          <div class="op-row">ID: CC-1984-07</div>
+          <div class="op-row">CLEARANCE: <b class="g">LINE GREEN</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="ph">Comm Streak <span class="v"><b id="streakDays">12</b> DAYS</span></div>
+      <div class="streak" id="streak"></div>
+    </section>
+
+    <section class="panel">
+      <div class="ph">Switchboard Score <span class="signal-ico"><i></i><i></i><i></i><i></i></span></div>
+      <div class="score-big" id="score">0</div>
+      <div class="score-next"><span>Next Rank</span><span id="nextRank">30,000</span></div>
+      <div class="mbar"><i class="fill-orange" id="rankBar" style="width:8%"></i></div>
+    </section>
+
+    <section class="panel">
+      <div class="ph">Daily Cipher</div>
+      <div class="cipher">
+        <div class="die"><i></i><i></i><i></i><i></i><i></i></div>
+        <div>
+          <div class="cipher-name" id="cipherName">Odd Numbers</div>
+          <div class="cipher-desc" id="cipherDesc">Only odd numbers can be used</div>
+          <div class="cipher-time" id="cipherTime">07:24:15</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="ph">Signal Tools</div>
+      <div class="tools2">
+        <div class="tool2"><div class="tn">Static Filter</div>
+          <div class="ti"><svg width="44" height="20" viewBox="0 0 44 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10h6l3-7 5 14 4-10 3 6 4-3 3 4h9"/></svg></div>
+          <div class="tx">×<span id="toolStatic">2</span></div></div>
+        <div class="tool2"><div class="tn">Power Boost</div>
+          <div class="ti"><svg width="22" height="26" viewBox="0 0 22 26" fill="currentColor"><path d="M13 0 2 15h7l-2 11 11-16h-7z"/></svg></div>
+          <div class="tx">×<span id="toolBoost">1</span></div></div>
+      </div>
+    </section>
+  </aside>
+
+  <!-- ============ CENTER ============ -->
+  <main class="col center">
+    <div class="currencies">
+      <div class="cur"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M5 19l4-4M19 5l-4 4M4 9l5 5M15 10l5 5"/></svg></span>
+        <span class="amt" id="curSat">1,250</span><span class="plus">+</span></div>
+      <div class="cur"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg></span>
+        <span class="amt" id="curBox">8,730</span><span class="plus">+</span></div>
+    </div>
+
+    <section class="board">
+      <div class="board-inner">
+        <div class="bh">
+          <span class="stamp">CLASSIFIED</span>
+          <span class="dish">ORBITAL<br>COMMS<br>BUREAU</span>
+          <div class="bureau">+++ Orbital Communications Bureau +++</div>
+          <div class="freq-lbl">Target Frequency · Transmission <b id="round">1</b></div>
+          <div class="target-num" id="target">000</div>
+          <div class="tstatus" id="tstatus"></div>
+        </div>
+        <div class="b-divider"></div>
+        <div class="b-sub">Available Numbers</div>
+        <div class="tiles" id="tiles"></div>
+        <div class="b-divider"></div>
+        <div class="b-sub">Route Log</div>
+        <div class="routebox"><div class="log" id="log"></div></div>
+        <div class="backup"><span class="bl">Backup channels</span><div class="exts" id="exts"></div></div>
+      </div>
+    </section>
+
+    <section class="console-wrap" id="console">
+      <div class="con-title">Orbital Relay Console · ORC-84A</div>
+      <div class="orbit">
+        <span class="om-lbl">ORBIT MAP</span>
+        <svg viewBox="0 0 200 150"><g fill="none" stroke="#2f6b4a" stroke-width="1">
+          <ellipse cx="100" cy="78" rx="78" ry="52"/><ellipse cx="100" cy="78" rx="54" ry="36"/><ellipse cx="100" cy="78" rx="30" ry="20"/>
+          </g>
+          <circle cx="100" cy="78" r="11" fill="#1d4a6a" stroke="#3a78a8" stroke-width="1.5"/>
+          <circle cx="100" cy="78" r="11" fill="none" stroke="#2f6b8a" stroke-width="3" stroke-dasharray="3 4"/>
+          <g><circle cx="178" cy="78" r="3" fill="#86e89a"><animateTransform attributeName="transform" type="rotate" from="0 100 78" to="360 100 78" dur="14s" repeatCount="indefinite"/></circle></g>
+          <g><circle cx="100" cy="42" r="2.6" fill="#e2b24a"><animateTransform attributeName="transform" type="rotate" from="0 100 78" to="-360 100 78" dur="9s" repeatCount="indefinite"/></circle></g>
+        </svg>
+        <span class="sat-l" style="top:30%;right:8%">SAT-7</span>
+        <span class="sat-l" style="bottom:18%;left:14%">SAT-9</span>
+      </div>
+      <div class="lcd-zone"><span class="cvl">Current Value</span></div>
+      <div class="m-lcd"><span class="lcd-text" id="lcd">0</span></div>
+      <div class="leds">
+        <div class="led on"><i></i>LINK</div>
+        <div class="led on" id="ledPower"><i></i>POWER</div>
+        <div class="led on" id="ledSync"><i></i>SYNC</div>
+        <div class="led alert dim" id="ledAlert"><i></i>ALERT</div>
+      </div>
+      <div class="tx-lbl">Transmit</div>
+      <div class="pad" id="pad"></div>
+    </section>
+
+    <section class="panel statusbar">
+      <div class="align">
+        <div class="al-top"><span>Frequency Alignment</span><b id="timer">01:30</b></div>
+        <div class="segbar" id="segbar"></div>
+        <i id="timerBar" style="display:none"></i>
+      </div>
+      <div class="sysbtns">
+        <button class="sysbtn">▤ Log</button>
+        <button class="sysbtn">◷ History</button>
+        <button class="sysbtn">⚙ System</button>
+      </div>
+    </section>
+
+    <div class="foot">🔒 ORBITAL RELAY CONTROL // EYES ONLY &nbsp;·&nbsp; <span class="st" id="statusMsg"></span></div>
+  </main>
+
+  <!-- ============ RIGHT ============ -->
+  <aside class="col right">
+    <section class="panel pu snow" id="puFreeze">
+      <div class="pu-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M4 7l16 10M20 7L4 17M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M4 7l.5 4M4 7l4-.5M20 17l-.5-4M20 17l-4 .5M20 7l-4 .5M20 7l-.5 4M4 17l4-.5M4 17l.5-4"/></svg></div>
+      <div class="pu-body"><div class="pu-name">Freeze Signal</div><div class="pu-desc">Pause the current frequency. Take a breath.</div></div>
+      <div class="pu-cnt" id="cntFreeze">1</div>
+    </section>
+    <section class="panel pu" id="puRedirect">
+      <div class="pu-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="13" r="7"/><path d="M12 13V6l3-3M9 13h6"/></svg></div>
+      <div class="pu-body"><div class="pu-name">Redirect Pulse</div><div class="pu-desc">Change the last operation (× or −) before it's applied.</div></div>
+      <div class="pu-cnt" id="cntRedirect">1</div>
+    </section>
+    <section class="panel pu heart" id="puSecond">
+      <div class="pu-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.7A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg></div>
+      <div class="pu-body"><div class="pu-name">Second Chance</div><div class="pu-desc">Rewind one step in the route log.</div></div>
+      <div class="pu-cnt" id="cntSecond">1</div>
+    </section>
+    <section class="panel pu" id="puOverride">
+      <div class="pu-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M7 7h10M7 11h3M12 11h2M16 11h1M7 15h3M7 18h3"/></svg></div>
+      <div class="pu-body"><div class="pu-name">Calculator Override</div><div class="pu-desc">Auto-solve the next operation.</div></div>
+      <div class="pu-cnt" id="cntOverride">1</div>
+    </section>
+
+    <section class="panel integrity">
+      <div class="integ-l">
+        <div class="il">Signal Integrity</div>
+        <div class="mbar"><i class="fill-green" id="precBar" style="width:100%"></i></div>
+        <div class="il" style="margin-top:8px">Relay Power</div>
+        <div class="mbar"><i class="fill-amber" id="powerBar" style="width:100%"></i></div>
+      </div>
+      <div style="text-align:right"><div class="integ-big" id="precPct">100%</div><div class="il" id="powerPct" style="color:var(--amber);margin-top:6px">100%</div></div>
+    </section>
+  </aside>
+</div>
+
+<div class="overlay" id="resultOverlay" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+
+"use strict";
+/* ===== MOTEUR (logique validée en Node, embarquée verbatim) ===== */
+/* =========================================================================
+   CALCCRAFTER — Moteur de jeu (logique pure, testable en Node)
+   "Le compte est bon" skinné en terminal de décryptage.
+   ========================================================================= */
+
+function randInt(n) { return Math.floor(Math.random() * n); }
+function pick(arr) { return arr[randInt(arr.length)]; }
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ---- Configs de difficulté en fonction du niveau (rang) ---------------- */
+function difficultyForLevel(level) {
+  // level : entier >= 1
+  if (level <= 2)  return { tMin: 40,  tMax: 220,  bigCount: 1, allowDivide: true,  oddBias: false };
+  if (level <= 5)  return { tMin: 120, tMax: 480,  bigCount: 2, allowDivide: true,  oddBias: false };
+  if (level <= 9)  return { tMin: 250, tMax: 720,  bigCount: 2, allowDivide: true,  oddBias: false };
+  if (level <= 14) return { tMin: 400, tMax: 900,  bigCount: 2, allowDivide: true,  oddBias: false };
+  return            { tMin: 500, tMax: 999,  bigCount: 2, allowDivide: true,  oddBias: false };
+}
+
+/* ---- Tirage des 6 nombres de départ ----------------------------------- */
+function drawNumbers(cfg, modifier) {
+  const smalls = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const oddSmalls = [1, 3, 5, 7, 9];
+  const bigs = [25, 50, 75, 100];
+  const total = 6;
+  let bigCount = cfg.bigCount;
+  if (modifier === 'tiny') bigCount = 0;        // Petits nombres : que des petits
+  const smallCount = total - bigCount;
+
+  const out = [];
+  const oddOnly = cfg.oddBias || modifier === 'odd';
+
+  // petits
+  const sourceSmalls = oddOnly ? oddSmalls : smalls;
+  for (let i = 0; i < smallCount; i++) out.push(pick(sourceSmalls));
+  // grands
+  for (let i = 0; i < bigCount; i++) out.push(pick(bigs));
+
+  return shuffle(out);
+}
+
+/* ---- Solveur : renvoie le chemin (liste d'étapes) vers la cible -------- */
+/* values: tableau de nombres. target: entier. allowDivide: bool.
+   Renvoie [{a, op, b, r}, ...] ou null. */
+function solvePath(values, target, allowDivide) {
+  if (allowDivide === undefined) allowDivide = true;
+  const seen = new Set();
+  function key(arr) { return arr.slice().sort((x, y) => x - y).join(','); }
+
+  function rec(arr) {
+    for (let i = 0; i < arr.length; i++) if (arr[i] === target) return [];
+    if (arr.length < 2) return null;
+    const k = key(arr);
+    if (seen.has(k)) return null;
+    seen.add(k);
+
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = 0; j < arr.length; j++) {
+        if (i === j) continue;
+        const a = arr[i], b = arr[j];
+        const cands = [];
+        // + et × : éviter les doublons en imposant i<j
+        if (i < j) {
+          cands.push(['+', a + b]);
+          cands.push(['×', a * b]);
+        }
+        // − : ordonné, résultat strictement positif
+        if (a - b > 0) cands.push(['−', a - b]);
+        // ÷ : ordonné, division entière
+        if (allowDivide && b !== 0 && a % b === 0) cands.push(['÷', a / b]);
+
+        for (const [op, r] of cands) {
+          const rest = [];
+          for (let t = 0; t < arr.length; t++) if (t !== i && t !== j) rest.push(arr[t]);
+          if (r === target) return [{ a, op, b, r }];
+          rest.push(r);
+          const sub = rec(rest);
+          if (sub) return [{ a, op, b, r }, ...sub];
+        }
+      }
+    }
+    return null;
+  }
+  return rec(values.slice());
+}
+
+function isReachable(values, target, allowDivide) {
+  return solvePath(values, target, allowDivide) !== null;
+}
+
+/* ---- Construction directe d'une cible solvable (>= 2 étapes) ----------- */
+function buildSolvable(numbers, cfg) {
+  const allowDivide = cfg.allowDivide;
+  let pool = numbers.map(v => ({ v }));
+  const steps = [];
+  const maxSteps = numbers.length - 1;
+
+  for (let s = 0; s < maxSteps; s++) {
+    if (pool.length < 2) break;
+    const moves = [];
+    for (let i = 0; i < pool.length; i++) {
+      for (let j = 0; j < pool.length; j++) {
+        if (i === j) continue;
+        const a = pool[i].v, b = pool[j].v;
+        if (i < j) {
+          moves.push({ i, j, op: '+', r: a + b });
+          moves.push({ i, j, op: '×', r: a * b });
+        }
+        if (a - b > 0) moves.push({ i, j, op: '−', r: a - b });
+        if (allowDivide && b !== 0 && a % b === 0 && a / b > 1) moves.push({ i, j, op: '÷', r: a / b });
+      }
+    }
+    if (!moves.length) break;
+
+    // on privilégie les coups qui restent < tMax pour ne pas exploser
+    const sane = moves.filter(m => m.r <= cfg.tMax * 1.6 && m.r >= 1);
+    const mv = pick(sane.length ? sane : moves);
+
+    steps.push({ a: pool[mv.i].v, op: mv.op, b: pool[mv.j].v, r: mv.r });
+    pool = pool.filter((_, k) => k !== mv.i && k !== mv.j);
+    pool.push({ v: mv.r });
+
+    // cible atteinte ?
+    if (steps.length >= 2 && mv.r >= cfg.tMin && mv.r <= cfg.tMax) {
+      return { target: mv.r, steps };
+    }
+  }
+  return null;
+}
+
+/* ---- Génère une manche complète --------------------------------------- */
+function generateRound(level, modifier) {
+  const cfg = Object.assign({}, difficultyForLevel(level));
+  if (modifier === 'nodiv') cfg.allowDivide = false;
+  if (modifier === 'tiny')  cfg.bigCount = 0;
+  if (modifier === 'odd')   cfg.oddBias = true;
+  if (modifier === 'big')   { cfg.tMin = Math.max(cfg.tMin, 701); cfg.tMax = 999; cfg.bigCount = 2; }
+  for (let attempt = 0; attempt < 6000; attempt++) {
+    const numbers = drawNumbers(cfg, modifier);
+    const built = buildSolvable(numbers, cfg);
+    if (!built) continue;
+    // la cible ne doit pas être un nombre de départ
+    if (numbers.includes(built.target)) continue;
+    // sécurité : on revérifie que c'est résoluble avec le solveur générique
+    if (!isReachable(numbers, built.target, cfg.allowDivide)) continue;
+    return {
+      target: built.target,
+      numbers,
+      reference: built.steps,        // une solution (pour l'indice)
+      allowDivide: cfg.allowDivide
+    };
+  }
+  // Filet de sécurité (déterministe) : 50 × 10 − 8 − 5 = 487
+  return {
+    target: 487,
+    numbers: [2, 5, 8, 10, 25, 50],
+    reference: [
+      { a: 50, op: '×', b: 10, r: 500 },
+      { a: 500, op: '−', b: 8, r: 492 },
+      { a: 492, op: '−', b: 5, r: 487 }
+    ],
+    allowDivide: true
+  };
+}
+
+/* ---- Nombre minimal d'opérations pour atteindre la cible (BFS) -------- */
+function minOps(values, target, allowDivide) {
+  if (allowDivide === undefined) allowDivide = true;
+  if (values.includes(target)) return 0;
+  const key = a => a.slice().sort((x, y) => x - y).join(',');
+  const visited = new Set([key(values)]);
+  let frontier = [values.slice()];
+  let depth = 0;
+  const MAX = 250000;
+  while (frontier.length) {
+    depth++;
+    const next = [];
+    for (const arr of frontier) {
+      for (let i = 0; i < arr.length; i++) {
+        for (let j = 0; j < arr.length; j++) {
+          if (i === j) continue;
+          const a = arr[i], b = arr[j];
+          const results = [];
+          if (i < j) { results.push(a + b); results.push(a * b); }
+          if (a - b > 0) results.push(a - b);
+          if (allowDivide && b !== 0 && a % b === 0) results.push(a / b);
+          for (const r of results) {
+            if (r === target) return depth;
+            const rest = [];
+            for (let t = 0; t < arr.length; t++) if (t !== i && t !== j) rest.push(arr[t]);
+            rest.push(r);
+            const k = key(rest);
+            if (!visited.has(k)) { visited.add(k); next.push(rest); }
+          }
+        }
+      }
+    }
+    if (visited.size > MAX) return depth;
+    frontier = next;
+  }
+  return Infinity;
+}
+
+/* ---- Calcul d'un score de manche --------------------------------------- */
+/* Le score dépend AVANT TOUT du nombre d'opérations : moins = mieux. */
+function computeScore({ usedOps, optimalOps, allNumbersUsed, usedHint, usedUndo, hadError, seconds, modMult, boost }) {
+  const breakdown = [];
+  let total = 300;
+  breakdown.push({ label: 'Cible déchiffrée', pts: 300 });
+
+  // Efficacité : −180 points par opération (1 op = 900, puis dégressif, plancher 80)
+  const ops = Math.max(1, usedOps || 1);
+  const eff = Math.max(80, 900 - (ops - 1) * 180);
+  total += eff;
+  breakdown.push({ label: 'Efficacité (' + ops + ' op.)', pts: eff });
+
+  // Bonus si la solution est optimale (aucune solution plus courte n'existe)
+  if (optimalOps && isFinite(optimalOps) && ops <= optimalOps) {
+    total += 300;
+    breakdown.push({ label: 'Solution optimale', pts: 300 });
+  }
+
+  if (allNumbersUsed) { total += 200; breakdown.push({ label: 'Tous les nombres', pts: 200 }); }
+  if (!usedHint)      { total += 150; breakdown.push({ label: 'Sans indice',      pts: 150 }); }
+  if (!usedUndo)      { total += 100; breakdown.push({ label: 'Sans annulation',  pts: 100 }); }
+  if (!hadError)      { total += 100; breakdown.push({ label: 'Zéro faute',       pts: 100 }); }
+
+  const timePts = Math.max(0, Math.round(200 * (1 - Math.min(seconds, 90) / 90)));
+  if (timePts > 0) { total += timePts; breakdown.push({ label: 'Rapidité', pts: timePts }); }
+
+  if (modMult && modMult !== 1) {
+    const before = total;
+    total = Math.round(total * modMult);
+    breakdown.push({ label: 'Multiplicateur cipher ×' + modMult, pts: total - before });
+  }
+  if (boost) {
+    const gain = total;
+    total = total * 2;
+    breakdown.push({ label: 'Circuit Boost ×2', pts: gain });
+  }
+
+  return { total, breakdown, coins: Math.ceil(total / 100) };
+}
+
+function starsFor({ usedOps, optimalOps, usedHint }) {
+  let s = 1;
+  if (!usedHint) s = 2;
+  if (!usedHint && optimalOps && isFinite(optimalOps) && (usedOps || 99) <= optimalOps) s = 3;
+  return s;
+}
+
+/* ---- Génère une cible solvable à partir de nombres FIXES, dans une plage --- */
+function makeTarget(numbers, lo, hi, allowDivide) {
+  const cfg = { tMin: lo, tMax: hi, allowDivide: allowDivide !== false };
+  for (let i = 0; i < 4000; i++) {
+    const b = buildSolvable(numbers, cfg);
+    if (b && !numbers.includes(b.target)) {
+      return { value: b.target, steps: b.steps, optimal: minOps(numbers, b.target, cfg.allowDivide) };
+    }
+  }
+  return null;
+}
+
+/* ---- Génère les cibles d'une mission satellite (X, Y, distance, fréquence) --- */
+function makeMission(numbers, ranges, allowDivide) {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const out = [];
+    let okAll = true;
+    for (const [lo, hi] of ranges) {
+      const t = makeTarget(numbers, lo, hi, allowDivide);
+      if (!t) { okAll = false; break; }
+      out.push(t);
+    }
+    if (okAll) return out;
+  }
+  return null;
+}
+
+/* ============================ JEU MINIMAL ============================ */
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('fr-FR');
+
+const CLEAN = [2, 5, 8, 10, 25, 50];
+const EXTERNALS = [3, 4, 6, 7, 9, 11];
+const EXT_POWER = 12, EXT_PREC = 10;          // l'unique effet : les secours coûtent puissance + précision
+const KEYS = [
+  {t:'+',k:'op'}, {t:'7',k:'d'}, {t:'8',k:'d'}, {t:'9',k:'d'},
+  {t:'−',k:'op'}, {t:'4',k:'d'}, {t:'5',k:'d'}, {t:'6',k:'d'},
+  {t:'×',k:'op'}, {t:'1',k:'d'}, {t:'2',k:'d'}, {t:'3',k:'d'},
+  {t:'÷',k:'op'}, {t:'0',k:'d'}, {t:'.',k:'dot'}, {t:'⌫',k:'back'},
+  {t:'CLR',k:'clr'}, {t:'ENTER',k:'ent'}
+];
+const MAX_DIGITS = 5;
+
+const state = {
+  score:0, round:1,
+  target:0, optimal:3,
+  tiles:[], entry:'', operandA:null, op:null, history:[], undoStack:[], _tid:1,
+  power:100, precision:100, usedExt:false,
+  time:90, timeMax:90, timerId:null, solved:false, sound:true
+};
+
+/* -------- audio -------- */
+let actx=null;
+function ac(){ if(!state.sound) return null; if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(actx.state==='suspended') actx.resume(); return actx; }
+function tone(f,d,t,g,w){ const c=ac(); if(!c) return; const s=(w||0)+c.currentTime; const o=c.createOscillator(),n=c.createGain(); o.type=t||'sine'; o.frequency.value=f; o.connect(n); n.connect(c.destination); n.gain.setValueAtTime(0.0001,s); n.gain.linearRampToValueAtTime(g||0.05,s+0.008); n.gain.exponentialRampToValueAtTime(0.0001,s+d); o.start(s); o.stop(s+d+0.02); }
+function beep(k){ switch(k){
+  case 'tap': tone(620,0.05,'square',0.035); break;
+  case 'op': tone(500,0.06,'sine',0.05); break;
+  case 'commit': tone(440,0.06,'sine',0.05); tone(660,0.09,'sine',0.045,0.05); break;
+  case 'ext': tone(300,0.1,'sawtooth',0.05); break;
+  case 'error': tone(150,0.16,'sawtooth',0.06); break;
+  case 'deny': tone(220,0.08,'square',0.04); break;
+  case 'win': [523,659,784,1046].forEach((f,i)=>tone(f,0.2,'sine',0.06,i*0.085)); break;
+  case 'fail': tone(300,0.2,'sawtooth',0.05); tone(180,0.3,'sawtooth',0.05,0.12); break;
+} }
+
+/* -------- utils -------- */
+function resetOp(){ state.entry=''; state.operandA=null; state.op=null; }
+function applyOp(a,op,b){ return op==='+'?a+b : op==='−'?a-b : op==='×'?a*b : a/b; }
+function isValidOp(a,op,b){ if(op==='÷') return b!==0 && a%b===0; if(op==='−') return a-b>0; return true; }
+function availableValue(v,ex){ return state.tiles.some(t=>t.value===v && t.id!==ex); }
+function setStatus(m){ $('statusMsg').textContent=m||''; }
+let toastTimer=null;
+function toast(m,ms){ const t=$('toast'); t.textContent=m; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,ms||2000); }
+function lcdDisplay(){ return state.entry!==''?state.entry:'0'; }
+function setLCD(){ const e=$('lcd'); e.className='lcd-text'; e.textContent=lcdDisplay(); }
+function flashLCD(v,cls){ const e=$('lcd'); e.className='lcd-text '+cls; e.textContent=String(v); setTimeout(()=>{ if($('lcd')===e){ e.className='lcd-text'; e.textContent=lcdDisplay(); } },700); }
+function denyTileEl(id){ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.classList.add('deny'); setTimeout(()=>el.classList.remove('deny'),320);} beep('deny'); }
+function glowValues(a,b){ const n=[...document.querySelectorAll('.tile')]; const na=n.find(x=>+x.dataset.val===a); if(na)na.classList.add('hintglow'); const nb=n.find(x=>x!==na && +x.dataset.val===b); if(nb)nb.classList.add('hintglow'); }
+function highlightIds(){ const ids={a:null,b:null}; const av=state.entry===''?null:Number(state.entry);
+  if(state.op===null){ if(av!==null){ const t=state.tiles.find(x=>x.value===av); if(t)ids.a=t.id; } }
+  else { const ta=state.tiles.find(x=>x.value===state.operandA); if(ta)ids.a=ta.id; if(av!==null){ const tb=state.tiles.find(x=>x.value===av && x.id!==ids.a); if(tb)ids.b=tb.id; } }
+  return ids; }
+
+/* -------- render -------- */
+function renderTiles(){
+  const hi=highlightIds(); const c=$('tiles'); c.innerHTML='';
+  state.tiles.forEach(t=>{ const b=document.createElement('button');
+    b.className='tile'+(t.ext?' ext':(t.derived?' derived':''))+(hi.a===t.id?' sel-a':'')+(hi.b===t.id?' sel-b':'');
+    b.dataset.id=t.id; b.dataset.val=t.value; b.textContent=t.value; b.addEventListener('click',()=>tileClick(t.id)); c.appendChild(b); });
+}
+function renderExts(){
+  const c=$('exts'); c.innerHTML='';
+  EXTERNALS.forEach(v=>{ const b=document.createElement('button'); b.className='ext'; b.textContent=v;
+    b.disabled = state.solved; b.onclick=()=>summon(v); c.appendChild(b); });
+}
+function renderLog(){
+  const c=$('log'); c.innerHTML='';
+  if(!state.history.length){ c.innerHTML='<div class="log-empty">— En attente de saisie —</div>'; return; }
+  state.history.forEach((h,i)=>{ const won=(h.r===state.target && i===state.history.length-1);
+    const row=document.createElement('div'); row.className='log-row'+(won?' win':'');
+    row.innerHTML='<span class="i">'+(i+1)+'</span><span>'+h.a+'</span><span class="op">'+h.op+'</span><span>'+h.b+'</span><span>=</span><span class="r">'+h.r+'</span>'+(won?' ✔':'');
+    c.appendChild(row); });
+}
+function renderOpActive(){ document.querySelectorAll('.k.opk').forEach(k=>k.classList.toggle('active', !!state.op && k.dataset.op===state.op)); }
+function renderGauges(){
+  const p=Math.round(state.power), pr=Math.round(state.precision);
+  $('powerPct').textContent=p+'%'; $('powerBar').style.width=p+'%';
+  $('precPct').textContent=pr+'%'; $('precBar').style.width=pr+'%';
+}
+function renderTimer(){
+  const t=Math.max(0,state.time); const m=Math.floor(t/60), s=t%60;
+  const el=$('timer'); el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  el.className='timer'+(t<=10?' crit':(t<=25?' warn':''));
+  $('timerBar').style.width=(t/state.timeMax*100)+'%';
+}
+function renderMeta(){ $('score').textContent=fmt(state.score); $('round').textContent=state.round; }
+function renderTarget(){ const el=$('target'); el.textContent=state.target; el.className='target-num'+(state.solved?' done':''); }
+function renderAll(){ renderTarget(); renderTiles(); renderExts(); renderLog(); renderOpActive(); renderGauges(); renderTimer(); renderMeta(); }
+
+/* -------- interaction -------- */
+function digitPress(d){ if(state.solved) return; if(state.entry==='' && d==='0'){ beep('deny'); return; } if(state.entry.length>=MAX_DIGITS){ beep('deny'); return; } state.entry+=d; setLCD(); beep('tap'); renderTiles(); }
+function backspace(){ if(state.entry.length){ state.entry=state.entry.slice(0,-1); setLCD(); beep('tap'); renderTiles(); } }
+function pushUndo(){ state.undoStack.push(state.tiles.map(t=>({id:t.id,value:t.value,derived:t.derived,ext:t.ext}))); }
+function tileClick(id){ if(state.solved) return; const tile=state.tiles.find(t=>t.id===id); if(!tile) return; state.entry=String(tile.value); setLCD(); beep('tap'); renderTiles(); }
+function opClick(op){
+  if(state.solved) return;
+  if(state.op===null){
+    if(state.entry===''){ setStatus('Tape ou choisis un premier nombre'); beep('deny'); return; }
+    const v=Number(state.entry);
+    if(!availableValue(v,null)){ setStatus('Nombre '+v+' indisponible'); beep('deny'); state.entry=''; setLCD(); renderTiles(); return; }
+    state.operandA=v; state.op=op; state.entry=''; setLCD(); beep('op'); renderTiles(); renderOpActive();
+  } else { state.op=op; beep('op'); renderOpActive(); }
+}
+function equals(){
+  if(state.solved) return;
+  if(state.op===null || state.operandA===null){ setStatus('Choisis un nombre, un opérateur, puis un nombre'); beep('deny'); return; }
+  if(state.entry===''){ setStatus('Tape le second nombre'); beep('deny'); return; }
+  const b=Number(state.entry);
+  const ta=state.tiles.find(t=>t.value===state.operandA);
+  if(!ta){ setStatus('Nombre '+state.operandA+' indisponible'); beep('deny'); resetOp(); setLCD(); renderTiles(); return; }
+  const tb=state.tiles.find(t=>t.value===b && t.id!==ta.id);
+  if(!tb){ setStatus(state.operandA===b?('Il te faut deux tuiles « '+b+' »'):('Nombre '+b+' indisponible')); beep('deny'); state.entry=''; setLCD(); renderTiles(); return; }
+  const a=ta.value, op=state.op;
+  if(!isValidOp(a,op,b)){ flashLCD('ERR','err'); beep('error'); setStatus(op==='÷'?'Division non entière interdite':'Résultat négatif interdit'); denyTileEl(ta.id); denyTileEl(tb.id); state.entry=''; renderTiles(); return; }
+  const r=applyOp(a,op,b);
+  pushUndo();
+  state.tiles=state.tiles.filter(t=>t.id!==ta.id && t.id!==tb.id);
+  state.tiles.push({id:'t'+(state._tid++),value:r,derived:true,ext:false});
+  state.history.push({a,op,b,r});
+  resetOp(); flashLCD(r,'win'); beep('commit'); renderAll();
+  if(r===state.target){ win(); return; }
+  // impasse propre ?
+  const vals=state.tiles.map(t=>t.value);
+  if(!vals.includes(state.target) && !isReachable(vals,state.target,true)) toast('Plus de solution — CLR ×2 pour recommencer, ou utilise un nombre de secours',3400);
+}
+function clearEntry(){
+  if(state.solved) return;
+  if(state.entry!==''){ state.entry=''; setStatus(''); }
+  else if(state.operandA!==null || state.op!==null){ resetOp(); setStatus(''); }
+  else { resetBoard(); return; }
+  setLCD(); beep('tap'); renderTiles(); renderOpActive();
+}
+function resetBoard(){
+  state.tiles=CLEAN.map(v=>({id:'t'+(state._tid++),value:v,derived:false,ext:false}));
+  resetOp(); state.history=[]; state.undoStack=[]; setStatus('Décodage réinitialisé'); setLCD(); beep('op'); renderAll();
+}
+function summon(v){
+  if(state.solved) return;
+  state.usedExt=true;
+  state.power=Math.max(0,state.power-EXT_POWER);
+  state.precision=Math.max(0,state.precision-EXT_PREC);
+  state.tiles.push({id:'t'+(state._tid++),value:v,derived:false,ext:true});
+  toast('Nombre de secours '+v+' ajouté (−'+EXT_POWER+' puissance, −'+EXT_PREC+' précision)',2600);
+  beep('ext'); renderTiles(); renderGauges();
+}
+
+/* -------- timer + round -------- */
+function stopTimer(){ if(state.timerId){ clearInterval(state.timerId); state.timerId=null; } }
+function tick(){ state.time--; renderTimer(); if(state.time<=0){ stopTimer(); fail(); } }
+function startTimer(){ stopTimer(); state.timerId=setInterval(tick,1000); }
+
+function newRound(){
+  const lo=100, hi=Math.min(900, 400 + state.round*25);
+  const t=makeTarget(CLEAN, lo, hi, true);
+  state.target = t ? t.value : 487;
+  state.optimal = t ? (t.optimal||3) : 3;
+  state.tiles=CLEAN.map(v=>({id:'t'+(state._tid++),value:v,derived:false,ext:false}));
+  resetOp(); state.history=[]; state.undoStack=[];
+  state.power=100; state.precision=100; state.usedExt=false; state.solved=false;
+  state.timeMax = Math.max(55, 95 - state.round*2); state.time=state.timeMax;
+  setStatus(''); setLCD(); renderAll(); startTimer();
+}
+function win(){
+  state.solved=true; stopTimer();
+  const power=Math.round(state.power), prec=Math.round(state.precision), tleft=Math.max(0,state.time);
+  const usedExt = state.usedExt;
+  let reward = Math.round(power*3 + prec*3 + tleft*4);
+  if(!usedExt) reward += 200;
+  state.score += reward;
+  saveState(); renderTarget(); renderExts(); beep('win');
+  showResult(true, {power,prec,tleft,reward,usedExt});
+}
+function fail(){
+  state.solved=true;
+  renderTarget(); renderExts(); beep('fail');
+  showResult(false, {power:Math.round(state.power),prec:Math.round(state.precision),tleft:0,reward:0,usedExt:state.tiles.some(t=>t.ext)});
+}
+function showResult(ok, d){
+  const o=$('resultOverlay');
+  o.innerHTML=
+    '<div class="modal">'+
+      '<div class="m-title '+(ok?'ok':'bad')+'">'+(ok?'COORDONNÉE TRANSMISE':'HORS DÉLAI')+'</div>'+
+      '<div class="m-sub">'+(ok?('Cible '+state.target+' atteinte'):('Cible '+state.target+' non décodée à temps'))+'</div>'+
+      '<div class="recap">'+
+        '<div class="row"><span>Puissance</span><b class="'+(d.power>=70?'g':'o')+'">'+d.power+'%</b></div>'+
+        '<div class="row"><span>Précision</span><b class="'+(d.prec>=70?'g':'o')+'">'+d.prec+'%</b></div>'+
+        '<div class="row"><span>Temps restant</span><b>'+d.tleft+' s</b></div>'+
+        (ok && !d.usedExt ? '<div class="row"><span>Transmission propre</span><b class="g">+200</b></div>' : '')+
+        '<div class="reward"><span>Crédits</span><b>+'+fmt(d.reward)+'</b></div>'+
+      '</div>'+
+      '<button class="mbtn" id="nextBtn">'+(ok?'Coordonnée suivante':'Réessayer')+'</button>'+
+    '</div>';
+  o.hidden=false;
+  $('nextBtn').onclick=()=>{ o.hidden=true; if(ok) state.round++; newRound(); };
+}
+
+/* -------- keypad -------- */
+function buildPad(){
+  const pad=$('pad'); pad.innerHTML='';
+  const COLS=[0.4799,0.5586,0.6374,0.7167];
+  const ROWS=[0.2993,0.4092,0.5209,0.6346];
+  const HOT=[
+    {cls:'digit',t:'7',x:COLS[0],y:ROWS[0]},{cls:'digit',t:'8',x:COLS[1],y:ROWS[0]},{cls:'digit',t:'9',x:COLS[2],y:ROWS[0]},{cls:'opk',op:'+',x:COLS[3],y:ROWS[0]},
+    {cls:'digit',t:'4',x:COLS[0],y:ROWS[1]},{cls:'digit',t:'5',x:COLS[1],y:ROWS[1]},{cls:'digit',t:'6',x:COLS[2],y:ROWS[1]},{cls:'opk',op:'−',x:COLS[3],y:ROWS[1]},
+    {cls:'digit',t:'1',x:COLS[0],y:ROWS[2]},{cls:'digit',t:'2',x:COLS[1],y:ROWS[2]},{cls:'digit',t:'3',x:COLS[2],y:ROWS[2]},{cls:'opk',op:'×',x:COLS[3],y:ROWS[2]},
+    {cls:'clr',t:'C',x:COLS[0],y:ROWS[3]},{cls:'digit',t:'0',x:COLS[1],y:ROWS[3]},{cls:'back',t:'⌫',x:COLS[2],y:ROWS[3]},{cls:'opk',op:'÷',x:COLS[3],y:ROWS[3]},
+    {cls:'ent',x:0.8793,y:0.6103,w:9.4,h:13}
+  ];
+  HOT.forEach(h=>{ const b=document.createElement('button');
+    b.className='k '+h.cls;
+    if(h.cls==='opk') b.dataset.op=h.op;
+    if(h.cls==='digit') b.dataset.d=h.t;
+    const w=h.w||7.2, ht=h.h||9.6;
+    b.style.left=(h.x*100-w/2)+'%'; b.style.top=(h.y*100-ht/2)+'%';
+    b.style.width=w+'%'; b.style.height=ht+'%';
+    pad.appendChild(b); });
+  pad.addEventListener('click',onKey);
+}
+function onKey(e){ const b=e.target.closest('.k'); if(!b) return; b.classList.add('press'); setTimeout(()=>b.classList.remove('press'),90);
+  if(b.classList.contains('opk')){ opClick(b.dataset.op); return; }
+  if(b.classList.contains('ent')){ equals(); return; }
+  if(b.classList.contains('clr')){ clearEntry(); return; }
+  if(b.classList.contains('back')){ backspace(); return; }
+  if(b.classList.contains('dot')){ beep('deny'); toast('Pas de décimales'); return; }
+  if(b.classList.contains('digit')){ digitPress(b.dataset.d); }
+}
+function pressEl(s){ const b=document.querySelector(s); if(b){ b.classList.add('press'); setTimeout(()=>b.classList.remove('press'),90); } }
+document.addEventListener('keydown',e=>{
+  if(!$('resultOverlay').hidden){ if(e.key==='Enter'){ const n=$('nextBtn'); if(n) n.click(); } return; }
+  const k=e.key;
+  if(k>='0'&&k<='9'){ digitPress(k); pressEl('.k.digit[data-d="'+k+'"]'); }
+  else if(k==='+'){ opClick('+'); pressEl('.k.opk[data-op="+"]'); }
+  else if(k==='-'){ opClick('−'); pressEl('.k.opk[data-op="−"]'); }
+  else if(k==='*'||k==='x'||k==='X'){ opClick('×'); pressEl('.k.opk[data-op="×"]'); }
+  else if(k==='/'){ e.preventDefault(); opClick('÷'); pressEl('.k.opk[data-op="÷"]'); }
+  else if(k==='Enter'||k==='='){ e.preventDefault(); equals(); pressEl('.k.ent'); }
+  else if(k==='Backspace'){ e.preventDefault(); backspace(); pressEl('.k.back'); }
+  else if(k==='Escape'||k==='c'||k==='C'){ clearEntry(); pressEl('.k.clr'); }
+});
+
+/* -------- persistance -------- */
+const SAVE_KEY='coord_save_v1';
+const store={ ok:false,
+  init(){ try{ const k='__c__'; window.localStorage.setItem(k,'1'); window.localStorage.removeItem(k); this.ok=true; }catch(e){ this.ok=false; } },
+  get(){ if(!this.ok) return null; try{ const s=window.localStorage.getItem(SAVE_KEY); return s?JSON.parse(s):null; }catch(e){ return null; } },
+  set(o){ if(!this.ok) return; try{ window.localStorage.setItem(SAVE_KEY,JSON.stringify(o)); }catch(e){} }
+};
+store.init();
+function saveState(){ store.set({score:state.score,round:state.round}); }
+function loadState(){ const s=store.get(); if(!s) return; if(typeof s.score==='number') state.score=s.score; if(typeof s.round==='number'&&s.round>=1) state.round=s.round; }
+
+/* -------- init -------- */
+loadState();
+buildPad();
+newRound();
+window.CC = state;
+
+</script>
+<script>
+
+/* ===== Extension UI (tableau de bord Orbital) — branché sur le moteur ===== */
+(function(){
+  // streak walkies
+  var st=document.getElementById('streak');
+  if(st){ for(var i=0;i<10;i++){ var w=document.createElement('div'); w.className='wt'+(i<8?' on':''); st.appendChild(w);} }
+
+  // rangs selon le score
+  var RANKS=[[0,'NOVICE I'],[3000,'NOVICE II'],[8000,'OPERATOR I'],[15000,'OPERATOR II'],[30000,'RELAY ADEPT'],[60000,'SIGNAL MASTER']];
+  function rankFor(s){ var r=RANKS[0],nx=RANKS[RANKS.length-1][0];
+    for(var i=0;i<RANKS.length;i++){ if(s>=RANKS[i][0]) r=RANKS[i]; }
+    for(var j=0;j<RANKS.length;j++){ if(RANKS[j][0]>s){ nx=RANKS[j][0]; break; } }
+    return {name:r[1], base:r[0], next:nx}; }
+
+  function updateOperator(){
+    var s=state.score, rk=rankFor(s);
+    var el=document.getElementById('rankName'); if(el) el.textContent=rk.name;
+    var nr=document.getElementById('nextRank'); if(nr) nr.textContent=(rk.next).toLocaleString('fr-FR');
+    var span=Math.max(1,rk.next-rk.base), pct=Math.max(4,Math.min(100,Math.round((s-rk.base)/span*100)));
+    var rb=document.getElementById('rankBar'); if(rb) rb.style.width=pct+'%';
+    var cb=document.getElementById('curBox'); if(cb) cb.textContent=(8730+Math.floor(s/10)).toLocaleString('fr-FR');
+    var cs=document.getElementById('curSat'); if(cs) cs.textContent=(1250+state.round*25).toLocaleString('fr-FR');
+  }
+  function updateIntegrity(){
+    var pr=Math.round(state.precision), pw=Math.round(state.power);
+    var pp=document.getElementById('precPct'); if(pp){ pp.textContent=pr+'%'; pp.style.color = pr>=70?'var(--green2)':(pr>=40?'var(--amber)':'var(--red2)'); }
+    var pwp=document.getElementById('powerPct'); if(pwp) pwp.textContent=pw+'%';
+  }
+  function updateAlignment(){
+    var t=Math.max(0,state.time), frac=state.timeMax?t/state.timeMax:0;
+    var seg=document.getElementById('segbar');
+    if(seg){ if(seg.children.length!==16){ seg.innerHTML=''; for(var i=0;i<16;i++) seg.appendChild(document.createElement('i')); }
+      var on=Math.round(frac*16);
+      for(var k=0;k<16;k++){ var c=seg.children[k]; var cls='';
+        if(k<on){ cls='on'+(frac>0.5?' g':''); } c.className=cls; } }
+    var alrt=document.getElementById('ledAlert'); if(alrt) alrt.className='led alert'+(t<=15?'':' dim');
+    var lp=document.getElementById('ledPower'); if(lp) lp.className='led'+(state.power>0?' on':'');
+  }
+
+  // wrap renderers (function declarations are reassignable bindings)
+  var _rm=renderMeta; renderMeta=function(){ _rm(); updateOperator(); };
+  var _rg=renderGauges; renderGauges=function(){ _rg(); updateIntegrity(); };
+  var _rt=renderTimer; renderTimer=function(){ _rt(); updateAlignment(); };
+
+  // ----- power-up: Second Chance (annule une étape) -----
+  function spend(id,cntEl){ if(state.solved) return false; var n=parseInt(cntEl.textContent,10)||0; if(n<=0){ toast('Plus de '+id+' disponible'); beep('deny'); return false; } cntEl.textContent=(n-1); return true; }
+  document.getElementById('puSecond').addEventListener('click',function(){
+    var c=document.getElementById('cntSecond');
+    if(!state.undoStack.length){ toast('Aucune étape à annuler'); beep('deny'); return; }
+    if(!spend('Second Chance',c)) return;
+    var prev=state.undoStack.pop();
+    state.tiles=prev.map(function(t){return {id:t.id,value:t.value,derived:t.derived,ext:t.ext};});
+    state.history.pop(); resetOp(); setLCD(); beep('op'); renderAll(); toast('Étape annulée');
+  });
+  // ----- power-up: Freeze Signal (met le minuteur en pause) -----
+  var frozen=false;
+  document.getElementById('puFreeze').addEventListener('click',function(){
+    var c=document.getElementById('cntFreeze');
+    if(frozen){ toast('Signal déjà gelé'); return; }
+    if(state.solved){ beep('deny'); return; }
+    if(!spend('Freeze',c)) return;
+    frozen=true; stopTimer(); toast('Signal gelé pendant 8 s'); beep('ext');
+    var cw=document.getElementById('console'); if(cw) cw.classList.add('frozen');
+    setTimeout(function(){ frozen=false; if(cw) cw.classList.remove('frozen'); if(!state.solved) startTimer(); },8000);
+  });
+  // ----- placeholders visuels -----
+  ['puRedirect','puOverride'].forEach(function(id){ var e=document.getElementById(id); if(e) e.addEventListener('click',function(){ toast('Module en cours de calibrage'); beep('deny'); }); });
+
+  // ----- Daily Cipher countdown (cosmétique, jusqu'à minuit) -----
+  function tickCipher(){ var el=document.getElementById('cipherTime'); if(!el) return;
+    var now=new Date(), end=new Date(now); end.setHours(24,0,0,0); var d=Math.max(0,Math.floor((end-now)/1000));
+    var h=Math.floor(d/3600), m=Math.floor(d%3600/60), s=d%60;
+    el.textContent=[h,m,s].map(function(x){return String(x).padStart(2,'0');}).join(':'); }
+  tickCipher(); setInterval(tickCipher,1000);
+
+  // premier rendu des extensions
+  updateOperator(); updateIntegrity(); updateAlignment();
+})();
+
+</script>
+</body>
+</html>
